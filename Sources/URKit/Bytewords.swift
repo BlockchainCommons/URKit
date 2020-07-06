@@ -1,0 +1,168 @@
+//
+//  Bytewords.swift
+//  URKit
+//
+//  Created by Wolf McNally on 7/3/20.
+//
+
+import Foundation
+
+public struct Bytewords {
+    public enum Style {
+        case standard
+        case uri
+        case minimal
+    }
+
+    public enum Error: Swift.Error {
+        case invalidWord
+        case invalidChecksum
+    }
+
+    public static func encodedLength(_ len: Int, style: Style = .standard) -> Int {
+        switch style {
+        case .standard, .uri:
+            return len * 4 + (len - 1)
+        case .minimal:
+            return len * 2
+        }
+    }
+
+    public static func encode(_ data: Data, style: Style = .standard) -> String {
+        switch style {
+        case .standard:
+            return encode(data, separator: " ")
+        case .uri:
+            return encode(data, separator: "-")
+        case .minimal:
+            return encodeMinimal(data)
+        }
+    }
+
+    public static func decode(_ string: String, style: Style = .standard) throws -> Data {
+        switch style {
+        case .standard:
+            return try decode(string, separator: " ")
+        case .uri:
+            return try decode(string, separator: "-")
+        case .minimal:
+            return try decodeMinimal(string)
+        }
+    }
+
+    private static func encode(_ data: Data, separator: String) -> String {
+        let words = appendChecksum(to: data).map { byte in
+            indexToBytewords[byte]!
+        }
+        return words.joined(separator: separator)
+    }
+
+    private static func encodeMinimal(_ data: Data) -> String {
+        let words = appendChecksum(to: data).map { byte in
+            indexToMinimalBytewords[byte]!
+        }
+        return words.joined(separator: "")
+    }
+
+    private static func decode(_ string: String, separator: Character) throws -> Data {
+        let words = string.split(separator: separator)
+        let values = try words.map { word -> UInt8 in
+            guard let value = bytewordsToIndex[String(word)] else {
+                throw Error.invalidWord
+            }
+            return value
+        }
+        let data = Data(values)
+        return try stripChecksum(from: data)
+    }
+
+    private static func decodeMinimal(_ string: String) throws -> Data {
+        let words = string.chunked(into: 2)
+        let values = try words.map { word -> UInt8 in
+            guard let value = minimalBytewordsToIndex[word] else {
+                throw Error.invalidWord
+            }
+            return value
+        }
+        let data = Data(values)
+        return try stripChecksum(from: data)
+    }
+
+    private static let bytewords = """
+    ableacidalsoapexaquaarchatomauntawayaxisbackbaldbarnbeltbetabias\
+    bluebodybragbrewbulbbuzzcalmcashcatschefcityclawcodecolacookcost\
+    cruxcurlcuspcyandarkdatadaysdelidicedietdoordowndrawdropdrumdull\
+    dutyeacheasyechoedgeepicevenexamexiteyesfactfairfernfigsfilmfish\
+    fizzflapflewfluxfoxyfreefrogfuelfundgalagamegeargemsgiftgirlglow\
+    goodgraygrimgurugushgyrohalfhanghardhawkheathelphighhillholyhope\
+    hornhutsicedideaidleinchinkyintoirisironitemjadejazzjoinjoltjowl\
+    judojugsjumpjunkjurykeepkenokeptkeyskickkilnkingkitekiwiknoblamb\
+    lavalazyleaflegsliarlistlimplionlogoloudloveluaulucklungmainmany\
+    mathmazememomenumeowmildmintmissmonknailnavyneednewsnextnoonnote\
+    numbobeyoboeomitonyxopenovalowlspaidpartpeckplaypluspoempoolpose\
+    puffpumapurrquadquizraceramprealredorichroadrockroofrubyruinruns\
+    rustsafesagascarsetssilkskewslotsoapsolosongstubsurfswantacotask\
+    taxitenttiedtimetinytoiltombtoystriptunatwinuglyundouniturgeuser\
+    vastveryvetovialvibeviewvisavoidvowswallwandwarmwaspwavewaxywebs\
+    whatwhenwhizwolfworkyankyawnyellyogayurtzapszestzinczonezoomzero
+    """
+
+    private static let indexToBytewords: [UInt8 : String] = {
+        var result: [UInt8 : String] = [:]
+        var a = bytewords.makeIterator()
+        (0...255).forEach { i in
+            let word = String((1...4).map { _ in a.next()! })
+            result[UInt8(i)] = word
+        }
+        return result
+    }()
+
+    private static let indexToMinimalBytewords: [UInt8 : String] = {
+        var result: [UInt8 : String] = [:]
+        var a = bytewords.makeIterator()
+        (0...255).forEach { i in
+            let letters = (1...4).map { _ in a.next()! }
+            let word = String([letters[0], letters[3]])
+            result[UInt8(i)] = word
+        }
+        return result
+    }()
+
+    private static let bytewordsToIndex: [String : UInt8] = {
+        var result: [String: UInt8] = [:]
+        var a = bytewords.makeIterator()
+        (0...255).forEach { i in
+            let word = String((1...4).map { _ in a.next()! })
+            result[word] = UInt8(i)
+        }
+        return result
+    }()
+
+    private static let minimalBytewordsToIndex: [String: UInt8] = {
+        var result: [String: UInt8] = [:]
+        var a = bytewords.makeIterator()
+        (0...255).forEach { i in
+            let letters = (1...4).map { _ in a.next()! }
+            let word = String([letters[0], letters[3]])
+            result[word] = UInt8(i)
+        }
+        return result
+    }()
+
+    private static func appendChecksum(to data: Data) -> Data {
+        var d = data
+        let checksum = CRC32.checksum(data: data)
+        d.append(checksum.data)
+        return d
+    }
+
+    private static func stripChecksum(from data: Data) throws -> Data {
+        let checksumSize = MemoryLayout<UInt32>.size
+        guard data.count > checksumSize else { throw Error.invalidChecksum }
+        let message = data.prefix(data.count - checksumSize)
+        let checksum = CRC32.checksum(data: message)
+        let messageChecksum = Data(data.suffix(checksumSize)).uint32
+        guard messageChecksum == checksum else { throw Error.invalidChecksum }
+        return message
+    }
+}
