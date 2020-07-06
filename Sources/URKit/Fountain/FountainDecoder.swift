@@ -1,8 +1,8 @@
 //
 //  FountainDecoder.swift
-//  FountainCodes
 //
-//  Created by Wolf McNally on 7/2/20.
+//  Copyright © 2020 by Blockchain Commons, LLC
+//  Licensed under the "BSD-2-Clause Plus Patent License"
 //
 
 import Foundation
