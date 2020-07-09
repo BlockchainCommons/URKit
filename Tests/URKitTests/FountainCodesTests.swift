@@ -11,7 +11,7 @@ import XCTest
 class FountainCodesTests: XCTestCase {
     func testCRC32() {
         let string = "Wolf"
-        let checksum = CRC32.checksum(data: string.data(using: .utf8)!)
+        let checksum = CRC32.checksum(data: string.utf8)
         XCTAssertEqual(checksum.data.hex, "598c84dc")
     }
 
@@ -111,10 +111,10 @@ class FountainCodesTests: XCTestCase {
         let checksum = CRC32.checksum(data: message)
         let fragmentLen = FountainEncoder.findNominalFragmentLength(messageLen: message.count, minFragmentLen: 10, maxFragmentLen: 100)
         let fragments = FountainEncoder.partitionMessage(message, fragmentLen: fragmentLen)
-        let fragmentIndexes = (1...30).map { nonce -> [Int] in
+        let partIndexes = (1...30).map { nonce -> [Int] in
             Array(chooseFragments(seqNum: UInt32(nonce), seqLen: fragments.count, checksum: checksum)).sorted()
         }
-        //print(fragmentIndexes)
+        //print(partIndexes)
 
         // The first `seqLen` parts are the "pure" fragments, not mixed with any
         // others. This means that if you only generate the first `seqLen` parts,
@@ -151,7 +151,7 @@ class FountainCodesTests: XCTestCase {
             [5, 6],
             [7]
         ]
-        XCTAssertEqual(fragmentIndexes, expectedFragmentIndexes)
+        XCTAssertEqual(partIndexes, expectedFragmentIndexes)
     }
 
     func testXOR() {

@@ -17,6 +17,10 @@ public final class UREncoder {
     private let ur: UR
     private let fountainEncoder: FountainEncoder
 
+    public var seqNum: UInt32 { return fountainEncoder.seqNum }
+    public var seqLen: Int { return fountainEncoder.seqLen }
+    public var partIndexes: Set<Int> { return fountainEncoder.partIndexes }
+
     /// Start encoding a (possibly) multi-part UR.
     public init(_ ur: UR, maxFragmentLen: Int, minFragmentLen: Int = 10, firstSeqNum: UInt32 = 0) {
         self.ur = ur

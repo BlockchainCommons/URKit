@@ -35,6 +35,9 @@ public final class URDecoder {
     let fountainDecoder: FountainDecoder
 
     public var expectedType: String?
+    public var expectedPartCount: Int! { fountainDecoder.expectedPartCount }
+    public var receivedPartIndexes: PartIndexes { fountainDecoder.receivedPartIndexes }
+    public var lastPartIndexes: PartIndexes! { fountainDecoder.lastPartIndexes }
     public var processedPartsCount: Int { fountainDecoder.processedPartsCount }
     public var estimatedPercentComplete: Double { fountainDecoder.estimatedPercentComplete }
     public var result: Result<UR, Swift.Error>?
@@ -44,20 +47,20 @@ public final class URDecoder {
         fountainDecoder = FountainDecoder()
     }
 
-    public func receivePart(_ string: String) {
+    @discardableResult public func receivePart(_ string: String) -> Bool {
         do {
             // Don't process the part if we're already done
-            guard result == nil else { return }
+            guard result == nil else { return false }
 
             // Don't continue if this part doesn't validate
             let (type, components) = try Self.parse(string)
-            guard validatePart(type: type) else { return }
+            guard validatePart(type: type) else { return false }
 
             // If this is a single-part UR then we're done
             if components.count == 1 {
                 let body = components[0]
                 result = try .success(Self.decode(type: type, body: body))
-                return
+                return true
             }
 
             // Multi-part URs must have two path components: seq/fragment
@@ -71,11 +74,13 @@ public final class URDecoder {
             let cbor = try Bytewords.decode(fragment, style: .minimal)
             let part = try FountainEncoder.Part(cbor: cbor)
             guard seqNum == part.seqNum, seqLen == part.seqLen else {
-                throw Error.invalidFragment
+                return false
             }
 
             // Process the part
-            fountainDecoder.receivePart(part)
+            guard fountainDecoder.receivePart(part) else {
+                return false
+            }
 
             switch fountainDecoder.result {
             case .success(let cbor)?:
@@ -85,8 +90,10 @@ public final class URDecoder {
             case nil:
                 break
             }
+
+            return true
         } catch {
-            return
+            return false
         }
     }
 

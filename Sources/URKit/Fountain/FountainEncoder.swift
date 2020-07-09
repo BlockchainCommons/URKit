@@ -15,8 +15,9 @@ public final class FountainEncoder {
     let checksum: UInt32
     let fragmentLen: Int
     let fragments: [Data]
-    var seqNum: UInt32
-    var seqLen: Int { fragments.count }
+    public private(set) var seqNum: UInt32
+    public private(set) var partIndexes: PartIndexes!
+    public var seqLen: Int { fragments.count }
 
     /// This becomes `true` when the minimum number of parts
     /// to relay the complete message have been generated
@@ -103,13 +104,13 @@ public final class FountainEncoder {
 
     public func nextPart() -> Part {
         seqNum &+= 1 // wrap at period 2^32
-        let indexes = chooseFragments(seqNum: seqNum, seqLen: seqLen, checksum: checksum)
-        let mixed = mix(fragmentIndexes: indexes)
+        partIndexes = chooseFragments(seqNum: seqNum, seqLen: seqLen, checksum: checksum)
+        let mixed = mix(partIndexes: partIndexes)
         return Part(seqNum: seqNum, seqLen: seqLen, messageLen: messageLen, checksum: checksum, data: mixed)
     }
 
-    private func mix(fragmentIndexes: Set<Int>) -> Data {
-        fragmentIndexes.reduce(into: Data(repeating: 0, count: fragmentLen)) { result, index in
+    private func mix(partIndexes: Set<Int>) -> Data {
+        partIndexes.reduce(into: Data(repeating: 0, count: fragmentLen)) { result, index in
             fragments[index].xor(into: &result)
         }
     }
