@@ -16,7 +16,11 @@ This framework is pure Swift 5, has no dependencies, and is available via Swift 
 * `Bytewords`: A codec for [Bytewords](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-012-bytewords.md).
 * A codec for [CBOR](https://en.wikipedia.org/wiki/CBOR) based on [SwiftCBOR](https://github.com/myfreeweb/SwiftCBOR), from the Public Domain.
 
-If you are using this framework at it's highest level, the main types of interest will be `UR`, `UREncoder`, and `URDecoder`. The CBOR codec is provided because the body of a compliant UR must be encoded in CBOR. You can use the provided codec or your own. The other layers may be used independently if desired.
+If you are using this framework at it's highest level, the main types of interest will be `UR`, `UREncoder`, and `URDecoder`.
+
+The CBOR codec is provided because the message of a compliant UR must be encoded in CBOR, and multi-part URs embed fragment data in a CBOR structure containing metadata needed by the decoder. For your own UR structures, you can use a different CBOR codec as long as the message encoded is well-formed CBOR.
+
+The other layers may be used independently if desired.
 
 There is also an iOS app, [URDemo](https://github.com/BlockchainCommons/URDemo), that demonstrates URKit by sending and receiving long binary messages via animated QR codes containing multi-part URs.
 
