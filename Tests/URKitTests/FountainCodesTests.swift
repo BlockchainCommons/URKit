@@ -249,7 +249,7 @@ class FountainCodesTests: XCTestCase {
         let decoder = FountainDecoder()
         repeat {
             let part = encoder.nextPart()
-            decoder.receivePart(part)
+            _ = decoder.receivePart(part)
             //print(decoder.estimatedPercentComplete)
         } while(decoder.result == nil)
         switch decoder.result! {
