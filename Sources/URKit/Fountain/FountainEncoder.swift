@@ -135,12 +135,13 @@ public final class FountainEncoder {
         precondition(minFragmentLen > 0)
         precondition(maxFragmentLen >= minFragmentLen)
         let maxFragmentCount = messageLen / minFragmentLen
+        var fragmentLen: Int!
         for fragmentCount in 1 ... maxFragmentCount {
-            let fragmentLen = Int(ceil(Double(messageLen) / Double(fragmentCount)))
+            fragmentLen = Int(ceil(Double(messageLen) / Double(fragmentCount)))
             if fragmentLen <= maxFragmentLen {
-                return fragmentLen
+                break
             }
         }
-        assert(false)
+        return fragmentLen
     }
 }
