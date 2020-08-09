@@ -16,11 +16,10 @@ public final class FountainDecoder {
     typealias PartDict = [PartIndexes: Part]
 
     public var expectedPartCount: Int! { return expectedPartIndexes?.count }
-    public var receivedPartIndexes: PartIndexes = []
+    public private(set) var receivedPartIndexes: PartIndexes = []
     public private(set) var lastPartIndexes: PartIndexes!
-    public private (set) var processedPartsCount = 0
-    public private (set) var result: Result<Data, Error>?
-    public private (set) var checksum: UInt32?
+    public private(set) var processedPartsCount = 0
+    public private(set) var result: Result<Data, Error>?
 
     var expectedPartIndexes: PartIndexes!
     var expectedFragmentLen: Int!
@@ -35,7 +34,7 @@ public final class FountainDecoder {
         guard result == nil else { return 1 }
         guard let expectedPartCount = expectedPartCount else { return 0 }
         let estimatedInputParts = Double(expectedPartCount) * 1.75
-        return min( 0.99, Double(processedPartsCount) / estimatedInputParts)
+        return min(0.99, Double(processedPartsCount) / estimatedInputParts)
     }
 
     public enum Error: Swift.Error {
@@ -86,7 +85,7 @@ public final class FountainDecoder {
 
         // Keep track of how many parts we've processed
         processedPartsCount += 1
-//        printPartEnd()
+        //printPartEnd()
         return true
     }
 
@@ -95,10 +94,9 @@ public final class FountainDecoder {
     }
 
     func printPartEnd() {
-        let expected = expectedPartCount
-        let received = receivedPartIndexes.count
+        let parts = expectedPartCount != nil ? String(expectedPartCount) : "nil"
         let percent = Int((estimatedPercentComplete * 100).rounded())
-        print("processed: \(processedPartsCount) expected: \(String(describing: expected)) received: \(received) percent: \(percent)%")
+        print("processed: \(processedPartsCount), expected: \(parts), received: \(receivedPartIndexes.count), percent: \(percent)%")
     }
 
     func printPart(_ part: Part) {
@@ -106,23 +104,36 @@ public final class FountainDecoder {
         print("part indexes: \(indexes)")
     }
 
+    private func resultDescription() -> String {
+        let desc: String
+        switch result {
+        case nil:
+            desc = "nil"
+        case let .success(message)?:
+            desc = "\(message.count) bytes"
+        case let .failure(error)?:
+            desc = error.localizedDescription
+        }
+        return desc;
+    }
+
     func printState() {
-        let parts = expectedPartCount
+        let parts = expectedPartCount != nil ? String(expectedPartCount) : "nil"
         let received = Array(receivedPartIndexes).sorted()
-        let mixed = mixedParts.keys.map { Array($0).sorted() }
+        let mixed = mixedParts.keys.map( { Array($0).sorted() } ).sorted(by: { $0.lexicographicallyPrecedes($1) } )
         let queued = queuedParts.count
-        print("parts: \(String(describing: parts)), received: \(received), mixed: \(mixed), queued: \(queued), result: \(String(describing: result))")
+        print("parts: \(parts), received: \(received), mixed: \(mixed), queued: \(queued), result: \(resultDescription())")
     }
 
     private func processQueueItem() {
         let part = queuedParts.removeFirst()
-//        printPart(part)
+        //printPart(part)
         if part.isSimple {
             processSimplePart(part)
         } else {
             processMixedPart(part)
         }
-//        printState()
+        //printState()
     }
 
     private func reduceMixed(by part: Part) {
@@ -163,7 +174,7 @@ public final class FountainDecoder {
 
     private func processSimplePart(_ part: Part) {
         // Don't process duplicate parts
-        let fragmentIndex = part.partIndexes.first!
+        let fragmentIndex = part.index
         guard !receivedPartIndexes.contains(fragmentIndex) else { return }
 
         // Record this part

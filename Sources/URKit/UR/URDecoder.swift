@@ -101,10 +101,10 @@ public final class URDecoder {
         if expectedType == nil {
             guard type.isURType else { return false }
             expectedType = type
+            return true
         } else {
             return type == expectedType
         }
-        return true
     }
 
     static func parse(_ string: String) throws -> (type: String, components: [String]) {

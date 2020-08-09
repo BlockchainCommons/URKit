@@ -17,14 +17,14 @@ public final class UREncoder {
     private let ur: UR
     private let fountainEncoder: FountainEncoder
 
-    public var seqNum: UInt32 { return fountainEncoder.seqNum }
-    public var seqLen: Int { return fountainEncoder.seqLen }
-    public var partIndexes: Set<Int> { return fountainEncoder.partIndexes }
+    public var seqNum: UInt32 { fountainEncoder.seqNum }
+    public var seqLen: Int { fountainEncoder.seqLen }
+    public var lastPartIndexes: Set<Int> { fountainEncoder.lastPartIndexes }
 
     /// Start encoding a (possibly) multi-part UR.
-    public init(_ ur: UR, maxFragmentLen: Int, minFragmentLen: Int = 10, firstSeqNum: UInt32 = 0) {
+    public init(_ ur: UR, maxFragmentLen: Int, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {
         self.ur = ur
-        fountainEncoder = FountainEncoder(message: ur.cbor, maxFragmentLen: maxFragmentLen, minFragmentLen: minFragmentLen, firstSeqNum: firstSeqNum)
+        fountainEncoder = FountainEncoder(message: ur.cbor, maxFragmentLen: maxFragmentLen, firstSeqNum: firstSeqNum, minFragmentLen: minFragmentLen)
     }
 
     /// `true` if the minimal number of parts to transmit the message have been

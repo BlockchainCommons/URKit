@@ -111,7 +111,7 @@ class FountainCodesTests: XCTestCase {
         let checksum = CRC32.checksum(data: message)
         let fragmentLen = FountainEncoder.findNominalFragmentLength(messageLen: message.count, minFragmentLen: 10, maxFragmentLen: 100)
         let fragments = FountainEncoder.partitionMessage(message, fragmentLen: fragmentLen)
-        let partIndexes = (1...30).map { nonce -> [Int] in
+        let fragmentIndexes = (1...30).map { nonce -> [Int] in
             Array(chooseFragments(seqNum: UInt32(nonce), seqLen: fragments.count, checksum: checksum)).sorted()
         }
         //print(partIndexes)
@@ -151,7 +151,7 @@ class FountainCodesTests: XCTestCase {
             [5, 6],
             [7]
         ]
-        XCTAssertEqual(partIndexes, expectedFragmentIndexes)
+        XCTAssertEqual(fragmentIndexes, expectedFragmentIndexes)
     }
 
     func testXOR() {
@@ -170,40 +170,37 @@ class FountainCodesTests: XCTestCase {
     func testEncoder() {
         let message = makeMessage(len: 256)
         let encoder = FountainEncoder(message: message, maxFragmentLen: 30)
-        let parts = (0 ..< 20).map { _ in encoder.nextPart() }
-        let partsJSON = parts.map { $0.description }
-        //partsJSON.forEach { print($0) }
-        let expectedPartsJSON = [
-            #"{"checksum":23570951,"data":"kW7GXPd8rfVc1\/nNoaEDACbd1C6QW3etw25PLTw=","messageLen":256,"seqLen":9,"seqNum":1}"#,
-            #"{"checksum":23570951,"data":"y6RPfwTy3kT0LYTDdKDhSRNvJbAYUlRZYdVff3o=","messageLen":256,"seqLen":9,"seqNum":2}"#,
-            #"{"checksum":23570951,"data":"jN5tDi7EPzsty2RKIgnoyeNK9cR0eYSl6HPJz18=","messageLen":256,"seqLen":9,"seqNum":3}"#,
-            #"{"checksum":23570951,"data":"ll4l7ikDn9+Mp08cdp\/AfrfrrsRuBpWupsvWCz4=","messageLen":256,"seqLen":9,"seqNum":4}"#,
-            #"{"checksum":23570951,"data":"xLv\/G5\/+ip5yQBKTd7nTcR7TjUEvu0RCJW8eb1k=","messageLen":256,"seqLen":9,"seqNum":5}"#,
-            #"{"checksum":23570951,"data":"Xg\/Ff+1FH7CgEB+3ax+x4biM\/f2qlGKUpH3o\/\/E=","messageLen":256,"seqLen":9,"seqNum":6}"#,
-            #"{"checksum":23570951,"data":"c\/AhwOb2WwXApJTlB5EnCgBQpzrmm2clUFouyKU=","messageLen":256,"seqLen":9,"seqNum":7}"#,
-            #"{"checksum":23570951,"data":"eRRXyYdt00qt0ZKlOqDcZrVWwMIVx864JItxfCI=","messageLen":256,"seqLen":9,"seqNum":8}"#,
-            #"{"checksum":23570951,"data":"lR5lMFtWo3BuPobrAcgDu\/kV2A7c1k1NAAAAAAA=","messageLen":256,"seqLen":9,"seqNum":9}"#,
-            #"{"checksum":23570951,"data":"Mw8PM6Be6tTzMd8imHG+5zO1Deca\/S5aefGW3gk=","messageLen":256,"seqLen":9,"seqNum":10}"#,
-            #"{"checksum":23570951,"data":"OyBc5eUtjCSlLP+jTFZPoa8\/3\/zTSdxCWO5O6Cg=","messageLen":256,"seqLen":9,"seqNum":11}"#,
-            #"{"checksum":23570951,"data":"3Xv3JepsFtUxtfAyVHg4AwSMoIuHFI2qzRzXoAY=","messageLen":256,"seqLen":9,"seqNum":12}"#,
-            #"{"checksum":23570951,"data":"dgvnrRxhh5ArvAT1ObnuXrjqaDMiLt6jYDEwbAE=","messageLen":256,"seqLen":9,"seqNum":13}"#,
-            #"{"checksum":23570951,"data":"W\/QDEhfSwyVLCI+nVTd4tQA2MvRuIdsSlBb2W1U=","messageLen":256,"seqLen":9,"seqNum":14}"#,
-            #"{"checksum":23570951,"data":"c\/AhwOb2WwXApJTlB5EnCgBQpzrmm2clUFouyKU=","messageLen":256,"seqLen":9,"seqNum":15}"#,
-            #"{"checksum":23570951,"data":"uFRuv+IEhUE0iRAmczHGQxM\/gor+yTN8MY9xt98=","messageLen":256,"seqLen":9,"seqNum":16}"#,
-            #"{"checksum":23570951,"data":"I97e6nTjoPsFK++r76E+L4DkMVydzu1MhjBhLmQ=","messageLen":256,"seqLen":9,"seqNum":17}"#,
-            #"{"checksum":23570951,"data":"0BqNrudpzjS2s108oABTAnJKvdrkBb20GcCmsgg=","messageLen":256,"seqLen":9,"seqNum":18}"#,
-            #"{"checksum":23570951,"data":"MXHF3DZXZu\/yWuR8bxDn3kjPuEdOBQ5f6Zem3CQ=","messageLen":256,"seqLen":9,"seqNum":19}"#,
-            #"{"checksum":23570951,"data":"4FXCQzViGE+nG0vpTyYuIA8BxvdMKEsNxvrmZz8=","messageLen":256,"seqLen":9,"seqNum":20}"#
-        ]
-        XCTAssertEqual(partsJSON, expectedPartsJSON)
+        let parts = (0 ..< 20).map { _ in encoder.nextPart().description }
+        print(parts)
+        let expectedParts = [
+            "seqNum:1, seqLen:9, messageLen:256, checksum:23570951, data:916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3c",
+            "seqNum:2, seqLen:9, messageLen:256, checksum:23570951, data:cba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a",
+            "seqNum:3, seqLen:9, messageLen:256, checksum:23570951, data:8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f",
+            "seqNum:4, seqLen:9, messageLen:256, checksum:23570951, data:965e25ee29039fdf8ca74f1c769fc07eb7ebaec46e0695aea6cbd60b3e",
+            "seqNum:5, seqLen:9, messageLen:256, checksum:23570951, data:c4bbff1b9ffe8a9e7240129377b9d3711ed38d412fbb4442256f1e6f59",
+            "seqNum:6, seqLen:9, messageLen:256, checksum:23570951, data:5e0fc57fed451fb0a0101fb76b1fb1e1b88cfdfdaa946294a47de8fff1",
+            "seqNum:7, seqLen:9, messageLen:256, checksum:23570951, data:73f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5",
+            "seqNum:8, seqLen:9, messageLen:256, checksum:23570951, data:791457c9876dd34aadd192a53aa0dc66b556c0c215c7ceb8248b717c22",
+            "seqNum:9, seqLen:9, messageLen:256, checksum:23570951, data:951e65305b56a3706e3e86eb01c803bbf915d80edcd64d4d0000000000",
+            "seqNum:10, seqLen:9, messageLen:256, checksum:23570951, data:330f0f33a05eead4f331df229871bee733b50de71afd2e5a79f196de09",
+            "seqNum:11, seqLen:9, messageLen:256, checksum:23570951, data:3b205ce5e52d8c24a52cffa34c564fa1af3fdffcd349dc4258ee4ee828",
+            "seqNum:12, seqLen:9, messageLen:256, checksum:23570951, data:dd7bf725ea6c16d531b5f03254783803048ca08b87148daacd1cd7a006",
+            "seqNum:13, seqLen:9, messageLen:256, checksum:23570951, data:760be7ad1c6187902bbc04f539b9ee5eb8ea6833222edea36031306c01",
+            "seqNum:14, seqLen:9, messageLen:256, checksum:23570951, data:5bf4031217d2c3254b088fa7553778b5003632f46e21db129416f65b55",
+            "seqNum:15, seqLen:9, messageLen:256, checksum:23570951, data:73f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5",
+            "seqNum:16, seqLen:9, messageLen:256, checksum:23570951, data:b8546ebfe2048541348910267331c643133f828afec9337c318f71b7df",
+            "seqNum:17, seqLen:9, messageLen:256, checksum:23570951, data:23dedeea74e3a0fb052befabefa13e2f80e4315c9dceed4c8630612e64",
+            "seqNum:18, seqLen:9, messageLen:256, checksum:23570951, data:d01a8daee769ce34b6b35d3ca0005302724abddae405bdb419c0a6b208",
+            "seqNum:19, seqLen:9, messageLen:256, checksum:23570951, data:3171c5dc365766eff25ae47c6f10e7de48cfb8474e050e5fe997a6dc24",
+            "seqNum:20, seqLen:9, messageLen:256, checksum:23570951, data:e055c2433562184fa71b4be94f262e200f01c6f74c284b0dc6fae6673f"]
+        XCTAssertEqual(parts, expectedParts)
     }
 
     func testEncoderCBOR() {
         let message = makeMessage(len: 256)
         let encoder = FountainEncoder(message: message, maxFragmentLen: 30)
-        let parts = (0 ..< 20).map { _ in encoder.nextPart() }
-        let partsCBOR = parts.map { $0.cbor.hex }
-        let expectedPartsCBOR = [
+        let parts = (0 ..< 20).map { _ in encoder.nextPart().cbor.hex }
+        let expectedParts = [
             "8501091901001a0167aa07581d916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3c",
             "8502091901001a0167aa07581dcba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a",
             "8503091901001a0167aa07581d8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f",
@@ -225,14 +222,14 @@ class FountainCodesTests: XCTestCase {
             "8513091901001a0167aa07581d3171c5dc365766eff25ae47c6f10e7de48cfb8474e050e5fe997a6dc24",
             "8514091901001a0167aa07581de055c2433562184fa71b4be94f262e200f01c6f74c284b0dc6fae6673f"
         ]
-        XCTAssertEqual(partsCBOR, expectedPartsCBOR)
+        XCTAssertEqual(parts, expectedParts)
     }
 
     func testEncoderIsComplete() {
         let message = makeMessage(len: 256)
         let encoder = FountainEncoder(message: message, maxFragmentLen: 30)
         var generatedPartsCount = 0
-        while(!encoder.isComplete) {
+        while !encoder.isComplete {
             _ = encoder.nextPart()
             generatedPartsCount += 1
         }
@@ -245,13 +242,13 @@ class FountainCodesTests: XCTestCase {
         let maxFragmentLen = 1000
 
         let message = makeMessage(len: messageSize, seed: messageSeed)
-        let encoder = FountainEncoder(message: message, maxFragmentLen: maxFragmentLen, firstSeqNum: 0)
+        let encoder = FountainEncoder(message: message, maxFragmentLen: maxFragmentLen, firstSeqNum: 100)
         let decoder = FountainDecoder()
         repeat {
             let part = encoder.nextPart()
             _ = decoder.receivePart(part)
             //print(decoder.estimatedPercentComplete)
-        } while(decoder.result == nil)
+        } while decoder.result == nil
         switch decoder.result! {
         case .success(let decodedMessage):
             XCTAssertEqual(decodedMessage, message)

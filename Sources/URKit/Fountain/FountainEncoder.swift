@@ -16,7 +16,7 @@ public final class FountainEncoder {
     let fragmentLen: Int
     let fragments: [Data]
     public private(set) var seqNum: UInt32
-    public private(set) var partIndexes: PartIndexes!
+    public private(set) var lastPartIndexes: PartIndexes!
     public var seqLen: Int { fragments.count }
 
     /// This becomes `true` when the minimum number of parts
@@ -79,7 +79,9 @@ public final class FountainEncoder {
             self.init(seqNum: seqNum, seqLen: seqLen, messageLen: messageLen, checksum: checksum, data: data)
         }
 
-        public var description: String { jsonString }
+        public var description: String {
+            "seqNum:\(seqNum), seqLen:\(seqLen), messageLen:\(messageLen), checksum:\(checksum), data:\(data.hex)"
+        }
 
         public var cbor: Data {
             let wrapper: CBOR = [
@@ -93,7 +95,7 @@ public final class FountainEncoder {
         }
     }
 
-    public init(message: Data, maxFragmentLen: Int, minFragmentLen: Int = 10, firstSeqNum: UInt32 = 0) {
+    public init(message: Data, maxFragmentLen: Int, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {
         assert(message.count <= UInt32.max)
         messageLen = message.count
         checksum = CRC32.checksum(data: message)
@@ -104,12 +106,12 @@ public final class FountainEncoder {
 
     public func nextPart() -> Part {
         seqNum &+= 1 // wrap at period 2^32
-        partIndexes = chooseFragments(seqNum: seqNum, seqLen: seqLen, checksum: checksum)
-        let mixed = mix(partIndexes: partIndexes)
+        lastPartIndexes = chooseFragments(seqNum: seqNum, seqLen: seqLen, checksum: checksum)
+        let mixed = mix(partIndexes: lastPartIndexes)
         return Part(seqNum: seqNum, seqLen: seqLen, messageLen: messageLen, checksum: checksum, data: mixed)
     }
 
-    private func mix(partIndexes: Set<Int>) -> Data {
+    private func mix(partIndexes: PartIndexes) -> Data {
         partIndexes.reduce(into: Data(repeating: 0, count: fragmentLen)) { result, index in
             fragments[index].xor(into: &result)
         }
