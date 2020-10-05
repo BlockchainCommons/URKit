@@ -97,14 +97,14 @@ public struct Bytewords {
     goodgraygrimgurugushgyrohalfhanghardhawkheathelphighhillholyhope\
     hornhutsicedideaidleinchinkyintoirisironitemjadejazzjoinjoltjowl\
     judojugsjumpjunkjurykeepkenokeptkeyskickkilnkingkitekiwiknoblamb\
-    lavalazyleaflegsliarlistlimplionlogoloudloveluaulucklungmainmany\
+    lavalazyleaflegsliarlimplionlistlogoloudloveluaulucklungmainmany\
     mathmazememomenumeowmildmintmissmonknailnavyneednewsnextnoonnote\
     numbobeyoboeomitonyxopenovalowlspaidpartpeckplaypluspoempoolpose\
     puffpumapurrquadquizraceramprealredorichroadrockroofrubyruinruns\
     rustsafesagascarsetssilkskewslotsoapsolosongstubsurfswantacotask\
     taxitenttiedtimetinytoiltombtoystriptunatwinuglyundouniturgeuser\
     vastveryvetovialvibeviewvisavoidvowswallwandwarmwaspwavewaxywebs\
-    whatwhenwhizwolfworkyankyawnyellyogayurtzapszestzinczonezoomzero
+    whatwhenwhizwolfworkyankyawnyellyogayurtzapszerozestzinczonezoom
     """
 
     private static let indexToBytewords: [UInt8 : String] = {

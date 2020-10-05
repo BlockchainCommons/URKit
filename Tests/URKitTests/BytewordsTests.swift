@@ -11,13 +11,13 @@ import XCTest
 class BytewordsTests: XCTestCase {
     func test1() {
         let input = Data([0, 1, 2, 128, 255])
-        XCTAssertEqual( Bytewords.encode(input, style: .standard), "able acid also lava zero jade need echo taxi")
-        XCTAssertEqual( Bytewords.encode(input, style: .uri), "able-acid-also-lava-zero-jade-need-echo-taxi")
-        XCTAssertEqual( Bytewords.encode(input, style: .minimal), "aeadaolazojendeoti")
+        XCTAssertEqual( Bytewords.encode(input, style: .standard), "able acid also lava zoom jade need echo taxi")
+        XCTAssertEqual( Bytewords.encode(input, style: .uri), "able-acid-also-lava-zoom-jade-need-echo-taxi")
+        XCTAssertEqual( Bytewords.encode(input, style: .minimal), "aeadaolazmjendeoti")
 
-        XCTAssertEqual( try Bytewords.decode("able acid also lava zero jade need echo taxi", style: .standard), input )
-        XCTAssertEqual( try Bytewords.decode("able-acid-also-lava-zero-jade-need-echo-taxi", style: .uri), input )
-        XCTAssertEqual( try Bytewords.decode("aeadaolazojendeoti", style: .minimal), input )
+        XCTAssertEqual( try Bytewords.decode("able acid also lava zoom jade need echo taxi", style: .standard), input )
+        XCTAssertEqual( try Bytewords.decode("able-acid-also-lava-zoom-jade-need-echo-taxi", style: .uri), input )
+        XCTAssertEqual( try Bytewords.decode("aeadaolazmjendeoti", style: .minimal), input )
 
         // bad checksum
         XCTAssertThrowsError( try Bytewords.decode("able acid also lava zero jade need echo wolf", style: .standard) )
@@ -45,24 +45,24 @@ class BytewordsTests: XCTestCase {
 
         let encoded = """
         yank toys bulb skew when warm free fair tent swan \
-        open brag mint noon jury lion view tiny brew note \
-        body data webs what zone bald join runs data whiz \
-        days keys user diet news ruby whiz zoom menu surf \
+        open brag mint noon jury list view tiny brew note \
+        body data webs what zinc bald join runs data whiz \
+        days keys user diet news ruby whiz zone menu surf \
         flew omit trip pose runs fund part even crux fern \
         math visa tied loud redo silk curl jugs hard beta \
         next cost puma drum acid junk swan free very mint \
-        flap warm fact math flap what list free jugs yell \
+        flap warm fact math flap what limp free jugs yell \
         fish epic whiz open numb math city belt glow wave \
-        list fuel grim free zoom open love diet gyro cats \
+        limp fuel grim free zone open love diet gyro cats \
         fizz holy city puff
         """
 
         let encodedMinimal = """
-        yktsbbswwnwmfefrttsnonbgmtnnjylnvwtybwne\
-        bydawswtzebdjnrsdawzdsksurdtnsrywzzmmusf\
+        yktsbbswwnwmfefrttsnonbgmtnnjyltvwtybwne\
+        bydawswtzcbdjnrsdawzdsksurdtnsrywzzemusf\
         fwottppersfdptencxfnmhvatdldroskcljshdba\
-        ntctpadmadjksnfevymtfpwmftmhfpwtltfejsyl\
-        fhecwzonnbmhcybtgwweltflgmfezmonledtgocs\
+        ntctpadmadjksnfevymtfpwmftmhfpwtlpfejsyl\
+        fhecwzonnbmhcybtgwwelpflgmfezeonledtgocs\
         fzhycypf
         """
 
