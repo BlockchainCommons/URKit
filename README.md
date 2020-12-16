@@ -47,7 +47,7 @@ This table below also establishes provenance (repository of origin, permalink, a
 
 **URKit** project is either derived from or was inspired by:
 
-- [UR specification](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md) — The specification for Universal Resources
+- [UR specification](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md) — The specification for Uniform Resources
 
 ### Used with…
 
