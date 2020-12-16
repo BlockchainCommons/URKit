@@ -2,7 +2,10 @@
 
 ## An iOS framework for encoding and decoding URs (Uniform Resources)
 
-### _by Wolf McNally and Christopher Allen_
+### _by [Wolf McNally](https://www.github.com/wolfmcnally) and [Christopher Allen](https://www.github.com/ChristopherA)_
+
+* <img src="https://github.com/BlockchainCommons/crypto-commons/blob/master/images/logos/crypto-commons-super-simple.png" width=16 valign="bottom">&nbsp;&nbsp; ***part of the [crypto commons](https://github.com/BlockchainCommons/crypto-commons/blob/master/README.md) technology family***
+
 
 This framework is pure Swift 5, has no dependencies, and is available via Swift Package Manager. It contains several major components:
 
