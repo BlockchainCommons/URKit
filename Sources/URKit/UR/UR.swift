@@ -20,4 +20,12 @@ public struct UR: Equatable {
         self.type = type
         self.cbor = cbor
     }
+
+    public init(type: String, cbor: [UInt8]) throws {
+        try self.init(type: type, cbor: Data(cbor))
+    }
+
+    public init(type: String, cbor: CBOR) throws {
+        try self.init(type: type, cbor: cbor.encode())
+    }
 }

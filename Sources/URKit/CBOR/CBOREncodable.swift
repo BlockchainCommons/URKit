@@ -19,6 +19,7 @@ extension CBOR: CBOREncodable {
         case let .utf8String(str): return str.encode()
         case let .array(a): return CBOR.encodeArray(a)
         case let .map(m): return CBOR.encodeMap(m)
+        case let .orderedMap(m): return CBOR.encodeOrderedMap(m)
         #if canImport(Foundation)
         case let .date(d): return CBOR.encodeDate(d)
         #endif
