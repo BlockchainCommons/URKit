@@ -117,6 +117,17 @@ public struct Bytewords {
         return result
     }()
 
+    public static let allWords: [String] = {
+        var result: [String] = .init()
+        result.reserveCapacity(256)
+        var a = bytewords.makeIterator()
+        (0...255).forEach { i in
+            let word = String((1...4).map { _ in a.next()! })
+            result.append(word)
+        }
+        return result
+    }()
+
     private static let indexToMinimalBytewords: [UInt8 : String] = {
         var result: [UInt8 : String] = [:]
         var a = bytewords.makeIterator()
