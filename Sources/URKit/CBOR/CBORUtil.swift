@@ -16,7 +16,7 @@ final class CBORUtil {
             case .emptyInput:
                 finished = true
             case .error:
-                throw CBORError.incorrectUTF8String
+                throw CBORDecodingError.incorrectUTF8String
             }
         } while (!finished)
         return result

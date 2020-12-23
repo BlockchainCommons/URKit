@@ -17,12 +17,12 @@ struct ArrayUInt8 {
 
 extension ArraySliceUInt8: CBORInputStream {
     mutating func popByte() throws -> UInt8 {
-        if slice.count < 1 { throw CBORError.unfinishedSequence }
+        if slice.count < 1 { throw CBORDecodingError.unfinishedSequence }
         return slice.removeFirst()
     }
 
     mutating func popBytes(_ n: Int) throws -> ArraySlice<UInt8> {
-        if slice.count < n { throw CBORError.unfinishedSequence }
+        if slice.count < n { throw CBORDecodingError.unfinishedSequence }
         let result = slice.prefix(n)
         slice = slice.dropFirst(n)
         return result
@@ -31,12 +31,12 @@ extension ArraySliceUInt8: CBORInputStream {
 
 extension ArrayUInt8: CBORInputStream {
     mutating func popByte() throws -> UInt8 {
-        guard array.count > 0 else { throw CBORError.unfinishedSequence }
+        guard array.count > 0 else { throw CBORDecodingError.unfinishedSequence }
         return array.removeFirst()
     }
 
     mutating func popBytes(_ n: Int) throws -> ArraySlice<UInt8> {
-        guard array.count >= n else { throw CBORError.unfinishedSequence }
+        guard array.count >= n else { throw CBORDecodingError.unfinishedSequence }
         let res = array.prefix(n)
         array = Array(array.dropFirst(n))
         return res

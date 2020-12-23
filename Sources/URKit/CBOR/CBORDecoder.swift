@@ -5,11 +5,24 @@
 import Foundation
 #endif
 
-public enum CBORError : Error {
+public enum CBORDecodingError : LocalizedError {
     case unfinishedSequence
     case wrongTypeInsideSequence
     case tooLongSequence
     case incorrectUTF8String
+    
+    public var errorDescription: String? {
+        switch self {
+        case .unfinishedSequence:
+            return "CBOR: Unfinished sequence."
+        case .wrongTypeInsideSequence:
+            return "CBOR: Wrong type inside."
+        case .tooLongSequence:
+            return "CBOR: Sequence too long."
+        case .incorrectUTF8String:
+            return "CBOR: Incorrect UTF8 string."
+        }
+    }
 }
 
 extension CBOR {
@@ -54,7 +67,7 @@ public class CBORDecoder {
         let n = try readVarUInt(v, base: base)
 
         guard n <= Int.max else {
-            throw CBORError.tooLongSequence
+            throw CBORDecodingError.tooLongSequence
         }
 
         return Int(n)
@@ -62,7 +75,7 @@ public class CBORDecoder {
 
     private func readN(_ n: Int) throws -> [CBOR] {
         return try (0..<n).map { _ in
-            guard let r = try decodeItem() else { throw CBORError.unfinishedSequence }
+            guard let r = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
             return r
         }
     }
@@ -71,7 +84,7 @@ public class CBORDecoder {
         var result: [CBOR] = []
         var cur = try decodeItem()
         while cur != CBOR.break {
-            guard let curr = cur else { throw CBORError.unfinishedSequence }
+            guard let curr = cur else { throw CBORDecodingError.unfinishedSequence }
             result.append(curr)
             cur = try decodeItem()
         }
@@ -81,8 +94,8 @@ public class CBORDecoder {
     private func readNPairs(_ n: Int) throws -> [CBOR : CBOR] {
         var result: [CBOR: CBOR] = [:]
         for _ in (0..<n) {
-            guard let key  = try decodeItem() else { throw CBORError.unfinishedSequence }
-            guard let val  = try decodeItem() else { throw CBORError.unfinishedSequence }
+            guard let key  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
+            guard let val  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
             result[key] = val
         }
         return result
@@ -96,12 +109,12 @@ public class CBORDecoder {
         }
         var val = try decodeItem()
         while key != CBOR.break {
-            guard let okey = key else { throw CBORError.unfinishedSequence }
-            guard let oval = val else { throw CBORError.unfinishedSequence }
+            guard let okey = key else { throw CBORDecodingError.unfinishedSequence }
+            guard let oval = val else { throw CBORDecodingError.unfinishedSequence }
             result[okey] = oval
-            do { key = try decodeItem() } catch CBORError.unfinishedSequence { key = nil }
+            do { key = try decodeItem() } catch CBORDecodingError.unfinishedSequence { key = nil }
             guard (key != CBOR.break) else { break } // don't eat the val after the break!
-            do { val = try decodeItem() } catch CBORError.unfinishedSequence { val = nil }
+            do { val = try decodeItem() } catch CBORDecodingError.unfinishedSequence { val = nil }
         }
         return result
     }
@@ -124,7 +137,7 @@ public class CBORDecoder {
             return CBOR.byteString(Array(try istream.popBytes(numBytes)))
         case 0x5f:
             return CBOR.byteString(try readUntilBreak().flatMap { x -> [UInt8] in
-                guard case .byteString(let r) = x else { throw CBORError.wrongTypeInsideSequence }
+                guard case .byteString(let r) = x else { throw CBORDecodingError.wrongTypeInsideSequence }
                 return r
             })
 
@@ -134,7 +147,7 @@ public class CBORDecoder {
             return CBOR.utf8String(try CBORUtil.decodeUtf8(try istream.popBytes(numBytes)))
         case 0x7f:
             return CBOR.utf8String(try readUntilBreak().map { x -> String in
-                guard case .utf8String(let r) = x else { throw CBORError.wrongTypeInsideSequence }
+                guard case .utf8String(let r) = x else { throw CBORDecodingError.wrongTypeInsideSequence }
                 return r
             }.joined(separator: ""))
 
@@ -155,7 +168,7 @@ public class CBORDecoder {
         // tagged values
         case 0xc0...0xdb:
             let tag = try readVarUInt(b, base: 0xc0)
-            guard let item = try decodeItem() else { throw CBORError.unfinishedSequence }
+            guard let item = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
             #if canImport(Foundation)
             if tag == 1 {
                 var date: Date
@@ -169,7 +182,7 @@ public class CBORDecoder {
                 case .unsignedInt(let u):
                     date = Date(timeIntervalSince1970: TimeInterval(u))
                 default:
-                    throw CBORError.wrongTypeInsideSequence
+                    throw CBORDecodingError.wrongTypeInsideSequence
                 }
                 return CBOR.date(date)
             }

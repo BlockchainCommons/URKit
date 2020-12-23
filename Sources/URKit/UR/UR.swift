@@ -7,16 +7,23 @@
 
 import Foundation
 
+public enum URError: LocalizedError {
+    case invalidType
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidType:
+            return "Invalid UR type."
+        }
+    }
+}
+
 public struct UR: Equatable {
     public let type: String
     public let cbor: Data
 
-    public enum Error: Swift.Error {
-        case invalidType
-    }
-
     public init(type: String, cbor: Data) throws {
-        guard type.isURType else { throw Error.invalidType }
+        guard type.isURType else { throw URError.invalidType }
         self.type = type
         self.cbor = cbor
     }

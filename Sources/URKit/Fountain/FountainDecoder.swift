@@ -12,6 +12,20 @@ import Foundation
 
 public typealias PartIndexes = Set<Int>
 
+public enum FountainDecoderError: LocalizedError {
+    case invalidPart
+    case invalidChecksum
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidPart:
+            return "FountainDecoder: Invalid part."
+        case .invalidChecksum:
+            return "FountainDecoder: Invalid checksum."
+        }
+    }
+}
+
 public final class FountainDecoder {
     typealias PartDict = [PartIndexes: Part]
 
@@ -35,11 +49,6 @@ public final class FountainDecoder {
         guard let expectedPartCount = expectedPartCount else { return 0 }
         let estimatedInputParts = Double(expectedPartCount) * 1.75
         return min(0.99, Double(processedPartsCount) / estimatedInputParts)
-    }
-
-    public enum Error: Swift.Error {
-        case invalidPart
-        case invalidChecksum
     }
 
     struct Part {
@@ -193,7 +202,7 @@ public final class FountainDecoder {
             if checksum == expectedChecksum {
                 result = .success(message)
             } else {
-                result = .failure(.invalidChecksum)
+                result = .failure(FountainDecoderError.invalidChecksum)
             }
         } else {
             // Reduce all the mixed parts by this part

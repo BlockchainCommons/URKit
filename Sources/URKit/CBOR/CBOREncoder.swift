@@ -350,6 +350,13 @@ extension CBOR {
     }
 }
 
-public enum CBOREncoderError: Error {
+public enum CBOREncoderError: LocalizedError {
     case invalidType
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidType:
+            return "Invalid CBOR type."
+        }
+    }
 }

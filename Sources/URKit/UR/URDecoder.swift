@@ -7,21 +7,36 @@
 
 import Foundation
 
-public final class URDecoder {
-    public enum Error: Swift.Error {
-        case invalidScheme
-        case invalidType
-        case invalidPathLength
-        case invalidSequenceComponent
-        case invalidFragment
+public enum URDecodingError: LocalizedError {
+    case invalidScheme
+    case invalidType
+    case invalidPathLength
+    case invalidSequenceComponent
+    case invalidFragment
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidScheme:
+            return "Invalid UR scheme."
+        case .invalidType:
+            return "Invalid UR type."
+        case .invalidPathLength:
+            return "Invalid UR path length."
+        case .invalidSequenceComponent:
+            return "Invalid UR sequence component."
+        case .invalidFragment:
+            return "Invalid UR fragment."
+        }
     }
+}
 
+public final class URDecoder {
     /// Decode a single-part UR.
     public static func decode(_ string: String) throws -> UR {
         let (type, components) = try parse(string)
 
         guard let body = components.first else {
-            throw Error.invalidPathLength
+            throw URDecodingError.invalidPathLength
         }
 
         return try decode(type: type, body: body)
@@ -64,7 +79,7 @@ public final class URDecoder {
             }
 
             // Multi-part URs must have two path components: seq/fragment
-            guard components.count == 2 else { throw Error.invalidPathLength }
+            guard components.count == 2 else { throw URDecodingError.invalidPathLength }
             let seq = components[0]
             let fragment = components[1]
 
@@ -112,7 +127,7 @@ public final class URDecoder {
         let lowered = string.lowercased()
 
         // Validate URI scheme
-        guard lowered.hasPrefix("ur:") else { throw Error.invalidScheme }
+        guard lowered.hasPrefix("ur:") else { throw URDecodingError.invalidScheme }
         let path = lowered.dropFirst(3)
 
         // Split the remainder into path components
@@ -120,23 +135,23 @@ public final class URDecoder {
 
         // Make sure there are at least two path components
         guard components.count > 1 else {
-            throw Error.invalidPathLength
+            throw URDecodingError.invalidPathLength
         }
 
         // Validate the type
         let type = components[0]
-        guard type.isURType else { throw Error.invalidType }
+        guard type.isURType else { throw URDecodingError.invalidType }
 
         return (type, Array(components[1...]))
     }
 
     static func parseSequenceComponent(_ s: String) throws -> (seqNum: Int, seqLen: Int) {
         let scanner = Scanner(string: s)
-        guard let seqNum = scanner.scanInt() else { throw Error.invalidSequenceComponent }
-        guard scanner.scanString("-") != nil else { throw Error.invalidSequenceComponent }
-        guard let seqLen = scanner.scanInt() else { throw Error.invalidSequenceComponent }
-        guard scanner.isAtEnd else { throw Error.invalidSequenceComponent }
-        guard seqNum >= 1, seqLen >= 1 else { throw Error.invalidSequenceComponent }
+        guard let seqNum = scanner.scanInt() else { throw URDecodingError.invalidSequenceComponent }
+        guard scanner.scanString("-") != nil else { throw URDecodingError.invalidSequenceComponent }
+        guard let seqLen = scanner.scanInt() else { throw URDecodingError.invalidSequenceComponent }
+        guard scanner.isAtEnd else { throw URDecodingError.invalidSequenceComponent }
+        guard seqNum >= 1, seqLen >= 1 else { throw URDecodingError.invalidSequenceComponent }
         return (seqNum, seqLen)
     }
 }

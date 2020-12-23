@@ -7,16 +7,25 @@
 
 import Foundation
 
+public enum BytewordsDecodingError: LocalizedError {
+    case invalidWord
+    case invalidChecksum
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidWord:
+            return "Invalid Bytewords word."
+        case .invalidChecksum:
+            return "Invalid Bytewords checksum."
+        }
+    }
+}
+
 public struct Bytewords {
     public enum Style {
         case standard
         case uri
         case minimal
-    }
-
-    public enum Error: Swift.Error {
-        case invalidWord
-        case invalidChecksum
     }
 
     public static func encodedLength(_ len: Int, style: Style = .standard) -> Int {
@@ -68,7 +77,7 @@ public struct Bytewords {
         let words = string.split(separator: separator)
         let values = try words.map { word -> UInt8 in
             guard let value = bytewordsToIndex[String(word)] else {
-                throw Error.invalidWord
+                throw BytewordsDecodingError.invalidWord
             }
             return value
         }
@@ -80,7 +89,7 @@ public struct Bytewords {
         let words = string.chunked(into: 2)
         let values = try words.map { word -> UInt8 in
             guard let value = minimalBytewordsToIndex[word] else {
-                throw Error.invalidWord
+                throw BytewordsDecodingError.invalidWord
             }
             return value
         }
@@ -169,11 +178,11 @@ public struct Bytewords {
 
     private static func stripChecksum(from data: Data) throws -> Data {
         let checksumSize = MemoryLayout<UInt32>.size
-        guard data.count > checksumSize else { throw Error.invalidChecksum }
+        guard data.count > checksumSize else { throw BytewordsDecodingError.invalidChecksum }
         let message = data.prefix(data.count - checksumSize)
         let checksum = CRC32.checksum(data: message)
         let messageChecksum = Data(data.suffix(checksumSize)).uint32
-        guard messageChecksum == checksum else { throw Error.invalidChecksum }
+        guard messageChecksum == checksum else { throw BytewordsDecodingError.invalidChecksum }
         return message
     }
 }
