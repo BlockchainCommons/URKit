@@ -33,6 +33,6 @@ public struct UR: Equatable {
     }
 
     public init(type: String, cbor: CBOR) throws {
-        try self.init(type: type, cbor: cbor.encode())
+        try self.init(type: type, cbor: cbor.cborEncode())
     }
 }

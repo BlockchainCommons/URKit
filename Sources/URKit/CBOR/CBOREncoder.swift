@@ -21,7 +21,7 @@ func rawBytes<T>(of x: T) -> [UInt8] {
 /// for all CBOR types except Float16
 extension CBOR {
     public static func encode<T: CBOREncodable>(_ value: T) -> [UInt8] {
-        return value.encode()
+        return value.cborEncode()
     }
 
     /// Encodes an array as either a CBOR array type or a CBOR bytestring type, depending on `asByteString`.
@@ -30,7 +30,7 @@ extension CBOR {
     public static func encode<T: CBOREncodable>(_ array: [T], asByteString: Bool = false) -> [UInt8] {
         if asByteString {
             let length = array.count
-            var res = length.encode()
+            var res = length.cborEncode()
             res[0] = res[0] | 0b010_00000
             let itemSize = MemoryLayout<T>.size
             let bytelength = length * itemSize
@@ -98,7 +98,7 @@ extension CBOR {
     // MARK: - major 2: bytestring
 
     public static func encodeByteString(_ bs: [UInt8]) -> [UInt8] {
-        var res = bs.count.encode()
+        var res = bs.count.cborEncode()
         res[0] = res[0] | 0b010_00000
         res.append(contentsOf: bs)
         return res
@@ -114,7 +114,7 @@ extension CBOR {
 
     public static func encodeString(_ str: String) -> [UInt8] {
         let utf8array = Array(str.utf8)
-        var res = utf8array.count.encode()
+        var res = utf8array.count.cborEncode()
         res[0] = res[0] | 0b011_00000
         res.append(contentsOf: utf8array)
         return res
@@ -123,9 +123,9 @@ extension CBOR {
     // MARK: - major 4: array of data items
 
     public static func encodeArray<T: CBOREncodable>(_ arr: [T]) -> [UInt8] {
-        var res = arr.count.encode()
+        var res = arr.count.cborEncode()
         res[0] = res[0] | 0b100_00000
-        res.append(contentsOf: arr.flatMap{ return $0.encode() })
+        res.append(contentsOf: arr.flatMap{ return $0.cborEncode() })
         return res
     }
 
@@ -134,30 +134,29 @@ extension CBOR {
     public static func encodeMap<A: CBOREncodable, B: CBOREncodable>(_ map: [A: B]) -> [UInt8] {
         var res: [UInt8] = []
         res.reserveCapacity(1 + map.count * (MemoryLayout<A>.size + MemoryLayout<B>.size + 2))
-        res = map.count.encode()
+        res = map.count.cborEncode()
         res[0] = res[0] | 0b101_00000
         for (k, v) in map {
-            res.append(contentsOf: k.encode())
-            res.append(contentsOf: v.encode())
+            res.append(contentsOf: k.cborEncode())
+            res.append(contentsOf: v.cborEncode())
         }
         return res
     }
 
-    public static func encodeOrderedMap<A: CBOREncodable, B: CBOREncodable>(_ map: [(A, B)]) -> [UInt8] {
+    public static func encodeOrderedMap(_ map: [OrderedMapEntry]) -> [UInt8] {
         var res: [UInt8] = []
-        res.reserveCapacity(1 + map.count * (MemoryLayout<A>.size + MemoryLayout<B>.size + 2))
-        res = map.count.encode()
+        res = map.count.cborEncode()
         res[0] = res[0] | 0b101_00000
-        for (k, v) in map {
-            res.append(contentsOf: k.encode())
-            res.append(contentsOf: v.encode())
+        for entry in map {
+            res.append(contentsOf: entry.key.cborEncode())
+            res.append(contentsOf: entry.value.cborEncode())
         }
         return res
     }
 
     public static func encodeMap<A: CBOREncodable>(_ map: [A: Any?]) throws -> [UInt8] {
         var res: [UInt8] = []
-        res = map.count.encode()
+        res = map.count.cborEncode()
         res[0] = res[0] | 0b101_00000
         try CBOR.encodeMap(map, into: &res)
         return res
@@ -168,7 +167,7 @@ extension CBOR {
     public static func encodeTagged<T: CBOREncodable>(tag: Tag, value: T) -> [UInt8] {
         var res = encodeVarUInt(tag.rawValue)
         res[0] = res[0] | 0b110_00000
-        res.append(contentsOf: value.encode())
+        res.append(contentsOf: value.cborEncode())
         return res
     }
 
@@ -241,7 +240,7 @@ extension CBOR {
     public static func encodeArrayChunk<T: CBOREncodable>(_ chunk: [T]) -> [UInt8] {
         var res: [UInt8] = []
         res.reserveCapacity(chunk.count * MemoryLayout<T>.size)
-        res.append(contentsOf: chunk.flatMap{ return $0.encode() })
+        res.append(contentsOf: chunk.flatMap{ return $0.cborEncode() })
         return res
     }
 
@@ -250,8 +249,8 @@ extension CBOR {
         let count = map.count
         res.reserveCapacity(count * MemoryLayout<A>.size + count * MemoryLayout<B>.size)
         for (k, v) in map {
-            res.append(contentsOf: k.encode())
-            res.append(contentsOf: v.encode())
+            res.append(contentsOf: k.cborEncode())
+            res.append(contentsOf: v.cborEncode())
         }
         return res
     }
@@ -282,25 +281,25 @@ extension CBOR {
     public static func encodeAny(_ any: Any?) throws -> [UInt8] {
         switch any {
         case is Int:
-            return (any as! Int).encode()
+            return (any as! Int).cborEncode()
         case is UInt:
-            return (any as! UInt).encode()
+            return (any as! UInt).cborEncode()
         case is UInt8:
-            return (any as! UInt8).encode()
+            return (any as! UInt8).cborEncode()
         case is UInt16:
-            return (any as! UInt16).encode()
+            return (any as! UInt16).cborEncode()
         case is UInt32:
-            return (any as! UInt32).encode()
+            return (any as! UInt32).cborEncode()
         case is UInt64:
-            return (any as! UInt64).encode()
+            return (any as! UInt64).cborEncode()
         case is String:
-            return (any as! String).encode()
+            return (any as! String).cborEncode()
         case is Float:
-            return (any as! Float).encode()
+            return (any as! Float).cborEncode()
         case is Double:
-            return (any as! Double).encode()
+            return (any as! Double).cborEncode()
         case is Bool:
-            return (any as! Bool).encode()
+            return (any as! Bool).cborEncode()
         case is [UInt8]:
             return CBOR.encodeByteString(any as! [UInt8])
         #if canImport(Foundation)
@@ -313,7 +312,7 @@ extension CBOR {
         #endif
         case is [Any]:
             let anyArr = any as! [Any]
-            var res = anyArr.count.encode()
+            var res = anyArr.count.cborEncode()
             res[0] = res[0] | 0b100_00000
             let encodedInners = try anyArr.reduce(into: []) { acc, next in
                 acc.append(contentsOf: try encodeAny(next))
@@ -322,7 +321,7 @@ extension CBOR {
             return res
         case is [String: Any]:
             let anyMap = any as! [String: Any]
-            var res: [UInt8] = anyMap.count.encode()
+            var res: [UInt8] = anyMap.count.cborEncode()
             res[0] = res[0] | 0b101_00000
             try CBOR.encodeMap(anyMap, into: &res)
             return res
@@ -337,7 +336,7 @@ extension CBOR {
 
     private static func encodeMap<A: CBOREncodable>(_ map: [A: Any?], into res: inout [UInt8]) throws {
         let sortedKeysWithEncodedKeys = map.keys.map {
-            (encoded: $0.encode(), key: $0)
+            (encoded: $0.cborEncode(), key: $0)
         }.sorted(by: {
             $0.encoded.lexicographicallyPrecedes($1.encoded)
         })

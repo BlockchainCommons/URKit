@@ -50,8 +50,8 @@ func chooseFragments(seqNum: UInt32, seqLen: Int, checksum: UInt32) -> Set<Int> 
 
 // Fisher-Yates shuffle
 func shuffled<T>(_ items: [T], rng: Xoshiro256) -> [T] {
-    var remaining = items;
-    var result: [T] = [];
+    var remaining = items
+    var result: [T] = []
     result.reserveCapacity(remaining.count)
     while !remaining.isEmpty {
         let index = rng.nextInt(in: 0 ..< remaining.count)

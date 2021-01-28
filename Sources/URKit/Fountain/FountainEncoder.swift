@@ -98,7 +98,7 @@ public final class FountainEncoder {
                 .unsignedInt(UInt64(checksum)),
                 .byteString(data.bytes)
             ]
-            return Data(wrapper.encode())
+            return Data(wrapper.cborEncode())
         }
     }
 

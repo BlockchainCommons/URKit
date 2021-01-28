@@ -123,7 +123,7 @@ public final class FountainDecoder {
         case let .failure(error)?:
             desc = error.localizedDescription
         }
-        return desc;
+        return desc
     }
 
     func printState() {

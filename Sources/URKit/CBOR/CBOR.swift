@@ -5,6 +5,16 @@
 import Foundation
 #endif
 
+public struct OrderedMapEntry: Hashable {
+    public let key: CBOR
+    public let value: CBOR
+
+    public init(key: CBOR, value: CBOR) {
+        self.key = key
+        self.value = value
+    }
+}
+
 public indirect enum CBOR : Equatable, Hashable,
         ExpressibleByNilLiteral, ExpressibleByIntegerLiteral, ExpressibleByStringLiteral,
         ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral, ExpressibleByBooleanLiteral,
@@ -16,7 +26,7 @@ public indirect enum CBOR : Equatable, Hashable,
     case utf8String(String)
     case array([CBOR])
     case map([CBOR : CBOR])
-    case orderedMap([(CBOR, CBOR)])
+    case orderedMap([OrderedMapEntry])
     case tagged(Tag, CBOR)
     case simple(UInt8)
     case boolean(Bool)
@@ -38,7 +48,7 @@ public indirect enum CBOR : Equatable, Hashable,
         case let .utf8String(l):  l.hash(into: &hasher)
         case let .array(l):       CBORUtil.djb2Hash(l.map { $0.hashValue }).hash(into: &hasher)
         case let .map(l):         CBORUtil.djb2Hash(l.map { $0.hashValue &+ $1.hashValue }).hash(into: &hasher)
-        case let .orderedMap(l):  CBORUtil.djb2Hash(l.map { $0.hashValue &+ $1.hashValue }).hash(into: &hasher)
+        case let .orderedMap(l):  CBORUtil.djb2Hash(l.map { $0.hashValue }).hash(into: &hasher)
         case let .tagged(t, l):   t.hash(into: &hasher)
                                   l.hash(into: &hasher)
         case let .simple(l):      l.hash(into: &hasher)
@@ -100,40 +110,42 @@ public indirect enum CBOR : Equatable, Hashable,
 
     public static func ==(lhs: CBOR, rhs: CBOR) -> Bool {
         switch (lhs, rhs) {
-        case (let .unsignedInt(l), let .unsignedInt(r)): return l == r
-        case (let .negativeInt(l), let .negativeInt(r)): return l == r
-        case (let .byteString(l),  let .byteString(r)):  return l == r
-        case (let .utf8String(l),  let .utf8String(r)):  return l == r
-        case (let .array(l),       let .array(r)):       return l == r
-        case (let .map(l),         let .map(r)):         return l == r
-        case (let .tagged(tl, l),  let .tagged(tr, r)):  return tl == tr && l == r
-        case (let .simple(l),      let .simple(r)):      return l == r
-        case (let .boolean(l),     let .boolean(r)):     return l == r
-        case (.null,               .null):               return true
-        case (.undefined,          .undefined):          return true
-        case (let .half(l),        let .half(r)):        return l == r
-        case (let .float(l),       let .float(r)):       return l == r
-        case (let .double(l),      let .double(r)):      return l == r
+        case (let .unsignedInt(l),  let .unsignedInt(r)):   return l == r
+        case (let .negativeInt(l),  let .negativeInt(r)):   return l == r
+        case (let .byteString(l),   let .byteString(r)):    return l == r
+        case (let .utf8String(l),   let .utf8String(r)):    return l == r
+        case (let .array(l),        let .array(r)):         return l == r
+        case (let .map(l),          let .map(r)):           return l == r
+        case (let .orderedMap(l),   let .orderedMap(r)):    return l == r
+        case (let .tagged(tl, l),   let .tagged(tr, r)):    return tl == tr && l == r
+        case (let .simple(l),       let .simple(r)):        return l == r
+        case (let .boolean(l),      let .boolean(r)):       return l == r
+        case (.null,                .null):                 return true
+        case (.undefined,           .undefined):            return true
+        case (let .half(l),         let .half(r)):          return l == r
+        case (let .float(l),        let .float(r)):         return l == r
+        case (let .double(l),       let .double(r)):        return l == r
         #if canImport(Foundation)
-        case (let .date(l),        let .date(r)):        return l == r
+        case (let .date(l),         let .date(r)):          return l == r
         #endif
-        case (.break,              .break):              return true
-        case (.unsignedInt, _): return false
-        case (.negativeInt, _): return false
-        case (.byteString,  _): return false
-        case (.utf8String,  _): return false
-        case (.array,       _): return false
-        case (.map,         _): return false
-        case (.tagged,      _): return false
-        case (.simple,      _): return false
-        case (.boolean,     _): return false
-        case (.null,        _): return false
-        case (.undefined,   _): return false
-        case (.half,        _): return false
-        case (.float,       _): return false
-        case (.double,      _): return false
-        case (.break,       _): return false
-        default:                return false
+        case (.break,              .break):                 return true
+        case (.unsignedInt,  _):                            return false
+        case (.negativeInt,  _):                            return false
+        case (.byteString,   _):                            return false
+        case (.utf8String,   _):                            return false
+        case (.array,        _):                            return false
+        case (.map,          _):                            return false
+        case (.orderedMap,   _):                            return false
+        case (.tagged,       _):                            return false
+        case (.simple,       _):                            return false
+        case (.boolean,      _):                            return false
+        case (.null,         _):                            return false
+        case (.undefined,    _):                            return false
+        case (.half,         _):                            return false
+        case (.float,        _):                            return false
+        case (.double,       _):                            return false
+        case (.break,        _):                            return false
+        default:                                            return false
         }
     }
 
