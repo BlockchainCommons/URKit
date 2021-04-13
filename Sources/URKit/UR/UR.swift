@@ -18,7 +18,7 @@ public enum URError: LocalizedError {
     }
 }
 
-public struct UR: Equatable {
+public struct UR: Equatable, CustomStringConvertible {
     public let type: String
     public let cbor: Data
 
@@ -34,5 +34,25 @@ public struct UR: Equatable {
 
     public init(type: String, cbor: CBOR) throws {
         try self.init(type: type, cbor: cbor.cborEncode())
+    }
+    
+    public init(urString: String) throws {
+        self = try URDecoder.decode(urString)
+    }
+    
+    public var string: String {
+        UREncoder.encode(self)
+    }
+    
+    public var qrString: String {
+        string.uppercased()
+    }
+    
+    public var qrData: Data {
+        qrString.data(using: .utf8)!
+    }
+    
+    public var description: String {
+        string
     }
 }
