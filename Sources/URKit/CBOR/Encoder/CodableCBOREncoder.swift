@@ -67,6 +67,6 @@ extension _CBOREncoder: Encoder {
     }
 }
 
-protocol CBOREncodingContainer: class {
+protocol CBOREncodingContainer: AnyObject {
     var data: Data { get }
 }
