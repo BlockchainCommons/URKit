@@ -171,19 +171,37 @@ public class CBORDecoder {
             guard let item = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
             #if canImport(Foundation)
             if tag == 1 {
-                var date: Date
+                // Per https://datatracker.ietf.org/doc/html/rfc8949#section-3.4.2
+                var seconds: TimeInterval
                 switch item {
                 case .double(let d):
-                    date = Date(timeIntervalSince1970: TimeInterval(d))
+                    seconds = TimeInterval(d)
                 case .negativeInt(let n):
-                    date = Date(timeIntervalSince1970: TimeInterval(n))
+                    seconds = TimeInterval(n)
                 case .float(let f):
-                    date = Date(timeIntervalSince1970: TimeInterval(f))
+                    seconds = TimeInterval(f)
                 case .unsignedInt(let u):
-                    date = Date(timeIntervalSince1970: TimeInterval(u))
+                    seconds = TimeInterval(u)
                 default:
                     throw CBORDecodingError.wrongTypeInsideSequence
                 }
+                let date = Date(timeIntervalSince1970: seconds)
+                return CBOR.date(date)
+            } else if tag == 100 {
+                // Per https://datatracker.ietf.org/doc/html/rfc8943
+                let days: Int?
+                switch item {
+                case .unsignedInt(let u):
+                    days = Int(exactly: u)
+                case .negativeInt(let n):
+                    days = Int(exactly: n)
+                default:
+                    throw CBORDecodingError.wrongTypeInsideSequence
+                }
+                guard let days = days else {
+                    throw CBORDecodingError.wrongTypeInsideSequence
+                }
+                let date = Calendar.current.date(byAdding: DateComponents(day: days), to: Date(timeIntervalSince1970: 0))!
                 return CBOR.date(date)
             }
             #endif
