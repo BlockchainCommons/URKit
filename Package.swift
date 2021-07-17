@@ -18,7 +18,8 @@ let package = Package(
     targets: [
         .target(
             name: "URKit",
-            dependencies: []),
+            dependencies: [],
+            exclude: ["CBOR/README.md"]),
         .testTarget(
             name: "URKitTests",
             dependencies: ["URKit"]),
