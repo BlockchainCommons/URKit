@@ -7,11 +7,12 @@
 
 import XCTest
 @testable import URKit
+import WolfBase
 
 class FountainCodesTests: XCTestCase {
     func testCRC32() {
         let string = "Wolf"
-        let checksum = CRC32.checksum(data: string.utf8)
+        let checksum = CRC32.checksum(data: string.utf8Data)
         XCTAssertEqual(checksum.data.hex, "598c84dc")
     }
 

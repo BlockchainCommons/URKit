@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import WolfBase
 
 // Implements Luby transform code rateless coding
 // https://en.wikipedia.org/wiki/Luby_transform_code

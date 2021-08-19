@@ -6,8 +6,7 @@
 
 * <img src="https://github.com/BlockchainCommons/crypto-commons/blob/master/images/logos/crypto-commons-super-simple.png" width=16 valign="bottom">&nbsp;&nbsp; ***part of the [crypto commons](https://github.com/BlockchainCommons/crypto-commons/blob/master/README.md) technology family***
 
-
-This framework is pure Swift 5, has no dependencies, and is available via Swift Package Manager. It contains several major components:
+This framework is pure Swift 5 and is available via Swift Package Manager. It contains several major components:
 
 * `UREncoder` and `URDecoder`, A codec for [UR](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-005-ur.md)s that supports single-part and multi-part transmission using fountain codes.
 * `FountainEncoder` and `FountainDecoder`: A general codec for binary strings based on [Luby Transform code](https://en.wikipedia.org/wiki/Luby_transform_code).

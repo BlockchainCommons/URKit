@@ -7,6 +7,7 @@
 
 import Foundation
 import CryptoKit
+import WolfBase
 
 // http://xoshiro.di.unimi.it/xoshiro256starstar.c
 // Translated to Swift by Wolf McNally
@@ -58,7 +59,7 @@ final class Xoshiro256 : RandomNumberGenerator {
     }
 
     convenience init(string: String) {
-        self.init(data: string.utf8)
+        self.init(data: string.utf8Data)
     }
 
     convenience init(crc32: UInt32) {

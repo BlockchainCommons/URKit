@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import WolfBase
 
 // Implements Luby transform code rateless decoding
 // https://en.wikipedia.org/wiki/Luby_transform_code
@@ -215,7 +216,7 @@ public final class FountainDecoder {
         guard !mixedParts.keys.contains(part.partIndexes) else { return }
 
         // Reduce this part by all the others
-        let p = join(simpleParts.values, mixedParts.values).reduce(part) {
+        let p = [simpleParts.values, mixedParts.values].joined().reduce(part) {
             reducePart($0, by: $1)
         }
 

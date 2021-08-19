@@ -14,11 +14,12 @@ let package = Package(
             targets: ["URKit"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/wolfmcnally/WolfBase", from: "1.1.1")
     ],
     targets: [
         .target(
             name: "URKit",
-            dependencies: [],
+            dependencies: ["WolfBase"],
             exclude: ["CBOR/README.md"]),
         .testTarget(
             name: "URKitTests",
