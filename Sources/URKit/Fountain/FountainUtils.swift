@@ -39,7 +39,7 @@ func chooseFragments(seqNum: UInt32, seqLen: Int, checksum: UInt32) -> Set<Int> 
     if seqNum <= seqLen {
         return Set([Int(seqNum) - 1])
     } else {
-        let seed = Data([seqNum.data, checksum.data].joined())
+        let seed = Data([seqNum.serialized, checksum.serialized].joined())
         let rng = Xoshiro256(data: seed)
         let degree = chooseDegree(seqLen: seqLen, rng: rng)
         let indexes = Array(0 ..< seqLen)

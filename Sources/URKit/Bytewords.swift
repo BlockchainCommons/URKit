@@ -173,7 +173,7 @@ public struct Bytewords {
     private static func appendChecksum(to data: Data) -> Data {
         var d = data
         let checksum = CRC32.checksum(data: data)
-        d.append(checksum.data)
+        d.append(checksum.serialized)
         return d
     }
 
@@ -182,7 +182,7 @@ public struct Bytewords {
         guard data.count > checksumSize else { throw BytewordsDecodingError.invalidChecksum }
         let message = data.prefix(data.count - checksumSize)
         let checksum = CRC32.checksum(data: message)
-        let messageChecksum = Data(data.suffix(checksumSize)).uint32
+        let messageChecksum = deserialize(UInt32.self, Data(data.suffix(checksumSize)))
         guard messageChecksum == checksum else { throw BytewordsDecodingError.invalidChecksum }
         return message
     }

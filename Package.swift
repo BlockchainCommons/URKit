@@ -14,7 +14,7 @@ let package = Package(
             targets: ["URKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/wolfmcnally/WolfBase", from: "1.1.1")
+        .package(url: "https://github.com/wolfmcnally/WolfBase", from: "2.0.0")
     ],
     targets: [
         .target(

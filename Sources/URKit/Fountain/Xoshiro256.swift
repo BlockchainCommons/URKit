@@ -63,7 +63,7 @@ final class Xoshiro256 : RandomNumberGenerator {
     }
 
     convenience init(crc32: UInt32) {
-        self.init(data: crc32.data)
+        self.init(data: crc32.serialized)
     }
 
     func next() -> UInt64 {
