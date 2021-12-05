@@ -24,12 +24,28 @@ public enum CBORDecodingError : LocalizedError {
 }
 
 extension CBOR {
-    static public func decode(_ input: Data) throws -> CBOR? {
+    static func decode(_ input: Data) throws -> CBOR? {
         return try CBORDecoder(input: input.bytes).decodeItem()
     }
 
-    static public func decode(_ input: [UInt8]) throws -> CBOR? {
+    static func decode(_ input: [UInt8]) throws -> CBOR? {
         return try CBORDecoder(input: input).decodeItem()
+    }
+}
+
+extension CBOR {
+    public init(_ input: Data) throws {
+        guard let c = try Self.decode(input) else {
+            throw CBORDecodingError.unfinishedSequence
+        }
+        self = c
+    }
+
+    public init(_ input: [UInt8]) throws {
+        guard let c = try Self.decode(input) else {
+            throw CBORDecodingError.unfinishedSequence
+        }
+        self = c
     }
 }
 
