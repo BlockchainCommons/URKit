@@ -77,7 +77,7 @@ public final class FountainEncoder {
                     guard case let CBOR.unsignedInt(n) = elem else { throw FountainEncoderError.invalidPartHeader }
                     checksum = UInt32(n)
                 case 4:
-                    guard case let CBOR.byteString(d) = elem else { throw FountainEncoderError.invalidPartHeader }
+                    guard case let CBOR.data(d) = elem else { throw FountainEncoderError.invalidPartHeader }
                     data = Data(d)
                 default:
                     fatalError()
@@ -97,7 +97,7 @@ public final class FountainEncoder {
                 .unsignedInt(UInt64(seqLen)),
                 .unsignedInt(UInt64(messageLen)),
                 .unsignedInt(UInt64(checksum)),
-                .byteString(data)
+                .data(data)
             ]
             return wrapper.cborEncode()
         }

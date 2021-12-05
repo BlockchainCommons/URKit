@@ -20,7 +20,7 @@ public indirect enum CBOR : Equatable, Hashable,
 
     case unsignedInt(UInt64)
     case negativeInt(UInt64)
-    case byteString(Data)
+    case data(Data)
     case utf8String(String)
     case array([CBOR])
     case map([CBOR : CBOR])
@@ -40,7 +40,7 @@ public indirect enum CBOR : Equatable, Hashable,
         switch self {
         case let .unsignedInt(l): l.hash(into: &hasher)
         case let .negativeInt(l): l.hash(into: &hasher)
-        case let .byteString(l):  CBORUtil.djb2Hash(l.map { Int($0) }).hash(into: &hasher)
+        case let .data(l):  CBORUtil.djb2Hash(l.map { Int($0) }).hash(into: &hasher)
         case let .utf8String(l):  l.hash(into: &hasher)
         case let .array(l):       CBORUtil.djb2Hash(l.map { $0.hashValue }).hash(into: &hasher)
         case let .map(l):         CBORUtil.djb2Hash(l.map { $0.hashValue &+ $1.hashValue }).hash(into: &hasher)
@@ -106,7 +106,7 @@ public indirect enum CBOR : Equatable, Hashable,
         switch (lhs, rhs) {
         case (let .unsignedInt(l),  let .unsignedInt(r)):   return l == r
         case (let .negativeInt(l),  let .negativeInt(r)):   return l == r
-        case (let .byteString(l),   let .byteString(r)):    return l == r
+        case (let .data(l),   let .data(r)):    return l == r
         case (let .utf8String(l),   let .utf8String(r)):    return l == r
         case (let .array(l),        let .array(r)):         return l == r
         case (let .map(l),          let .map(r)):           return l == r
@@ -123,7 +123,7 @@ public indirect enum CBOR : Equatable, Hashable,
         case (.break,              .break):                 return true
         case (.unsignedInt,  _):                            return false
         case (.negativeInt,  _):                            return false
-        case (.byteString,   _):                            return false
+        case (.data,   _):                            return false
         case (.utf8String,   _):                            return false
         case (.array,        _):                            return false
         case (.map,          _):                            return false

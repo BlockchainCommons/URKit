@@ -235,7 +235,7 @@ extension _CBORDecoder.SingleValueContainer: SingleValueDecodingContainer {
             throw DecodingError.dataCorrupted(context)
         }
         switch cbor {
-        case .byteString(let bytes): return Data(bytes)
+        case .data(let bytes): return Data(bytes)
         default:
             let context = DecodingError.Context(codingPath: self.codingPath, debugDescription: "Invalid format: \(self.data)")
             throw DecodingError.typeMismatch(Double.self, context)

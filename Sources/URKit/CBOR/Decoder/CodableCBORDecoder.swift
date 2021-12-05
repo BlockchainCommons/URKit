@@ -24,7 +24,7 @@ final public class CodableCBORDecoder {
             return date as! T
         } else if type == Data.self {
             guard let cbor = try? CBORDecoder(input: [UInt8](data)).decodeItem(),
-                case .byteString(let data) = cbor
+                case .data(let data) = cbor
             else {
                 let context = DecodingError.Context(codingPath: [], debugDescription: "Unable to decode data for Data")
                 throw DecodingError.dataCorrupted(context)

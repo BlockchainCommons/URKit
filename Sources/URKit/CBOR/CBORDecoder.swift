@@ -136,10 +136,10 @@ public class CBORDecoder {
         // byte strings
         case 0x40...0x5b:
             let numBytes = try readLength(b, base: 0x40)
-            return CBOR.byteString(Data(try istream.popBytes(numBytes)))
+            return CBOR.data(Data(try istream.popBytes(numBytes)))
         case 0x5f:
-            return CBOR.byteString(Data(try readUntilBreak().flatMap { x -> Data in
-                guard case .byteString(let r) = x else { throw CBORDecodingError.wrongTypeInsideSequence }
+            return CBOR.data(Data(try readUntilBreak().flatMap { x -> Data in
+                guard case .data(let r) = x else { throw CBORDecodingError.wrongTypeInsideSequence }
                 return r
             }))
 

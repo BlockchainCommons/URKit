@@ -13,7 +13,7 @@ extension CBOR: CBOREncodable {
         switch self {
         case let .unsignedInt(ui): return CBOR.encodeVarUInt(ui)
         case let .negativeInt(ni): return CBOR.encodeNegativeInt(~Int64(bitPattern: ni))
-        case let .byteString(bs): return CBOR.encodeData(bs)
+        case let .data(bs): return CBOR.encodeData(bs)
         case let .utf8String(str): return str.cborEncode()
         case let .array(a): return CBOR.encodeArray(a)
         case let .map(m): return CBOR.encodeMap(m)
