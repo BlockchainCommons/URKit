@@ -54,7 +54,7 @@ public final class FountainEncoder {
         }
 
         public init(cbor: Data) throws {
-            guard let decoded = try! CBOR.decode(cbor.bytes) else { throw FountainEncoderError.invalidPartHeader }
+            guard let decoded = try! CBOR.decode(cbor) else { throw FountainEncoderError.invalidPartHeader }
             guard case let CBOR.array(a) = decoded,
                   a.count == 5 else { throw FountainEncoderError.invalidPartHeader }
             var seqNum: UInt32!
@@ -97,9 +97,9 @@ public final class FountainEncoder {
                 .unsignedInt(UInt64(seqLen)),
                 .unsignedInt(UInt64(messageLen)),
                 .unsignedInt(UInt64(checksum)),
-                .byteString(data.bytes)
+                .byteString(data)
             ]
-            return Data(wrapper.cborEncode())
+            return wrapper.cborEncode()
         }
     }
 

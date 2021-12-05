@@ -71,6 +71,6 @@ extension _CBOREncoder.UnkeyedContainer: CBOREncodingContainer {
         for container in storage {
             data.append(contentsOf: container.data)
         }
-        return Data(data)
+        return data
     }
 }

@@ -71,8 +71,7 @@ extension _CBOREncoder.KeyedContainer: KeyedEncodingContainerProtocol {
 extension _CBOREncoder.KeyedContainer: CBOREncodingContainer {
     var data: Data {
         // TODO: Check that this works for all sizes of map
-        var data: [UInt8] = []
-        data = storage.count.cborEncode()
+        var data = storage.count.cborEncode()
         data[0] = data[0] | 0b101_00000
         for (key, container) in self.storage {
             let keyContainer = _CBOREncoder.SingleValueContainer(codingPath: self.codingPath, userInfo: self.userInfo)
@@ -81,6 +80,6 @@ extension _CBOREncoder.KeyedContainer: CBOREncodingContainer {
             data.append(contentsOf: container.data)
         }
 
-        return Data(data)
+        return data
     }
 }

@@ -1,9 +1,7 @@
 // From: https://github.com/myfreeweb/SwiftCBOR
 // License: Public Domain
 
-#if canImport(Foundation)
 import Foundation
-#endif
 
 public enum CBORDecodingError : LocalizedError {
     case unfinishedSequence
@@ -26,6 +24,10 @@ public enum CBORDecodingError : LocalizedError {
 }
 
 extension CBOR {
+    static public func decode(_ input: Data) throws -> CBOR? {
+        return try CBORDecoder(input: input.bytes).decodeItem()
+    }
+
     static public func decode(_ input: [UInt8]) throws -> CBOR? {
         return try CBORDecoder(input: input).decodeItem()
     }
@@ -134,12 +136,12 @@ public class CBORDecoder {
         // byte strings
         case 0x40...0x5b:
             let numBytes = try readLength(b, base: 0x40)
-            return CBOR.byteString(Array(try istream.popBytes(numBytes)))
+            return CBOR.byteString(Data(try istream.popBytes(numBytes)))
         case 0x5f:
-            return CBOR.byteString(try readUntilBreak().flatMap { x -> [UInt8] in
+            return CBOR.byteString(Data(try readUntilBreak().flatMap { x -> Data in
                 guard case .byteString(let r) = x else { throw CBORDecodingError.wrongTypeInsideSequence }
                 return r
-            })
+            }))
 
         // utf-8 strings
         case 0x60...0x7b:
@@ -169,7 +171,6 @@ public class CBORDecoder {
         case 0xc0...0xdb:
             let tag = try readVarUInt(b, base: 0xc0)
             guard let item = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
-            #if canImport(Foundation)
             if tag == 1 {
                 // Per https://datatracker.ietf.org/doc/html/rfc8949#section-3.4.2
                 var seconds: TimeInterval
@@ -204,7 +205,6 @@ public class CBORDecoder {
                 let date = Calendar.current.date(byAdding: DateComponents(day: days), to: Date(timeIntervalSince1970: 0))!
                 return CBOR.date(date)
             }
-            #endif
             return CBOR.tagged(CBOR.Tag(rawValue: tag), item)
 
         case 0xe0...0xf3: return CBOR.simple(b - 0xe0)

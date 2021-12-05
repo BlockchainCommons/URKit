@@ -1,9 +1,7 @@
 // From: https://github.com/myfreeweb/SwiftCBOR
 // License: Public Domain
 
-#if canImport(Foundation)
 import Foundation
-#endif
 
 public struct OrderedMapEntry: Hashable {
     public let key: CBOR
@@ -22,7 +20,7 @@ public indirect enum CBOR : Equatable, Hashable,
 
     case unsignedInt(UInt64)
     case negativeInt(UInt64)
-    case byteString([UInt8])
+    case byteString(Data)
     case utf8String(String)
     case array([CBOR])
     case map([CBOR : CBOR])
@@ -36,9 +34,7 @@ public indirect enum CBOR : Equatable, Hashable,
     case float(Float32)
     case double(Float64)
     case `break`
-    #if canImport(Foundation)
     case date(Date)
-    #endif
 
     public func hash(into hasher: inout Hasher) {
         switch self {
@@ -58,9 +54,7 @@ public indirect enum CBOR : Equatable, Hashable,
         case let .half(l):        l.hash(into: &hasher)
         case let .float(l):       l.hash(into: &hasher)
         case let .double(l):      l.hash(into: &hasher)
-        #if canImport(Foundation)
         case let .date(l):        l.hash(into: &hasher)
-        #endif
         case .break:              Int.min.hash(into: &hasher)
         }
     }
@@ -125,9 +119,7 @@ public indirect enum CBOR : Equatable, Hashable,
         case (let .half(l),         let .half(r)):          return l == r
         case (let .float(l),        let .float(r)):         return l == r
         case (let .double(l),       let .double(r)):        return l == r
-        #if canImport(Foundation)
         case (let .date(l),         let .date(r)):          return l == r
-        #endif
         case (.break,              .break):                 return true
         case (.unsignedInt,  _):                            return false
         case (.negativeInt,  _):                            return false

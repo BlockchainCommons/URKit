@@ -38,7 +38,7 @@ To unwrap the decoded `CBOR` values, use [PATTERN MATCHING](https://alisoftware.
 
 ## Encoding
 
-Encoding a value returns an array of bytes, `[UInt8]`. You can encode with `CBOR.encode(myValue)` or `myValue.encode()`. Any type that conforms to the `CBOREncodable` protocol may be encoded. You can implement the `CBOREncodable` protocol for your types and then encode as usual.
+Encoding a value returns a `Data`. You can encode with `CBOR.encode(myValue)` or `myValue.encode()`. Any type that conforms to the `CBOREncodable` protocol may be encoded. You can implement the `CBOREncodable` protocol for your types and then encode as usual.
 
 ```swift
 CBOR.encode(100)  // --> [0x18, 0x64] of type [UInt8]
@@ -46,8 +46,8 @@ Int(100).encode() // --> [0x18, 0x64]. Int conforms to the CBOREncodable protoco
 "hello".encode()  // --> [0x65, 0x68, 0x65, 0x6c, 0x6c, 0x6f]. So does String
 CBOR.encode(["a", "b", "c"])
 
-let byteString: [UInt8] = [0x01, 0x02]
-CBOR.encode(byteString, asByteString: true)
+let data = Data([0x01, 0x02])
+CBOR.encode(data, asByteString: true)
 ```
 
 Due to Swift's incomplete generics system, you cannot call `someArray.encode()` or `someDictionary.encode()`, but you can simply use `CBOR.encode(someArrayOrMap)` so long as your array items or map key and value types conform to `CBOREncodable`.

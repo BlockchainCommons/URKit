@@ -1,9 +1,7 @@
 // From: https://github.com/myfreeweb/SwiftCBOR
 // License: Public Domain
 
-#if canImport(Foundation)
 import Foundation
-#endif
 
 let isBigEndian = Int(bigEndian: 42) == 42
 
@@ -20,14 +18,14 @@ func rawBytes<T>(of x: T) -> [UInt8] {
 /// Defines more fine-grained functions of form CBOR.encode*(_ x)
 /// for all CBOR types except Float16
 extension CBOR {
-    public static func encode<T: CBOREncodable>(_ value: T) -> [UInt8] {
+    public static func encode<T: CBOREncodable>(_ value: T) -> Data {
         return value.cborEncode()
     }
 
     /// Encodes an array as either a CBOR array type or a CBOR bytestring type, depending on `asByteString`.
     /// NOTE: when `asByteString` is true and T = UInt8, the array is interpreted in network byte order
     /// Arrays with values of all other types will have their bytes reversed if the system is little endian.
-    public static func encode<T: CBOREncodable>(_ array: [T], asByteString: Bool = false) -> [UInt8] {
+    public static func encode<T: CBOREncodable>(_ array: [T], asByteString: Bool = false) -> Data {
         if asByteString {
             let length = array.count
             var res = length.cborEncode()
@@ -54,30 +52,30 @@ extension CBOR {
         }
     }
 
-    public static func encode<A: CBOREncodable, B: CBOREncodable>(_ dict: [A: B]) -> [UInt8] {
+    public static func encode<A: CBOREncodable, B: CBOREncodable>(_ dict: [A: B]) -> Data {
         return encodeMap(dict)
     }
 
     // MARK: - major 0: unsigned integer
 
-    public static func encodeUInt8(_ x: UInt8) -> [UInt8] {
-        if (x < 24) { return [x] }
-        else { return [0x18, x] }
+    public static func encodeUInt8(_ x: UInt8) -> Data {
+        if (x < 24) { return Data([x]) }
+        else { return Data([0x18, x]) }
     }
 
-    public static func encodeUInt16(_ x: UInt16) -> [UInt8] {
-        return [0x19] + rawBytes(of: x)
+    public static func encodeUInt16(_ x: UInt16) -> Data {
+        return Data([0x19] + rawBytes(of: x))
     }
 
-    public static func encodeUInt32(_ x: UInt32) -> [UInt8] {
-        return [0x1a] + rawBytes(of: x)
+    public static func encodeUInt32(_ x: UInt32) -> Data {
+        return Data([0x1a] + rawBytes(of: x))
     }
 
-    public static func encodeUInt64(_ x: UInt64) -> [UInt8] {
-        return [0x1b] + rawBytes(of: x)
+    public static func encodeUInt64(_ x: UInt64) -> Data {
+        return Data([0x1b] + rawBytes(of: x))
     }
 
-    internal static func encodeVarUInt(_ x: UInt64) -> [UInt8] {
+    internal static func encodeVarUInt(_ x: UInt64) -> Data {
         switch x {
         case let x where x <= UInt8.max: return CBOR.encodeUInt8(UInt8(x))
         case let x where x <= UInt16.max: return CBOR.encodeUInt16(UInt16(x))
@@ -88,7 +86,7 @@ extension CBOR {
 
     // MARK: - major 1: negative integer
 
-    public static func encodeNegativeInt(_ x: Int64) -> [UInt8] {
+    public static func encodeNegativeInt(_ x: Int64) -> Data {
         assert(x < 0)
         var res = encodeVarUInt(~UInt64(bitPattern: x))
         res[0] = res[0] | 0b001_00000
@@ -97,22 +95,20 @@ extension CBOR {
 
     // MARK: - major 2: bytestring
 
-    public static func encodeByteString(_ bs: [UInt8]) -> [UInt8] {
+    public static func encodeByteString(_ bs: [UInt8]) -> Data {
         var res = bs.count.cborEncode()
         res[0] = res[0] | 0b010_00000
         res.append(contentsOf: bs)
         return res
     }
 
-    #if canImport(Foundation)
-    public static func encodeData(_ data: Data) -> [UInt8] {
-        return encodeByteString([UInt8](data))
+    public static func encodeData(_ data: Data) -> Data {
+        return encodeByteString(data.bytes)
     }
-    #endif
 
     // MARK: - major 3: UTF8 string
 
-    public static func encodeString(_ str: String) -> [UInt8] {
+    public static func encodeString(_ str: String) -> Data {
         let utf8array = Array(str.utf8)
         var res = utf8array.count.cborEncode()
         res[0] = res[0] | 0b011_00000
@@ -122,7 +118,7 @@ extension CBOR {
 
     // MARK: - major 4: array of data items
 
-    public static func encodeArray<T: CBOREncodable>(_ arr: [T]) -> [UInt8] {
+    public static func encodeArray<T: CBOREncodable>(_ arr: [T]) -> Data {
         var res = arr.count.cborEncode()
         res[0] = res[0] | 0b100_00000
         res.append(contentsOf: arr.flatMap{ return $0.cborEncode() })
@@ -131,8 +127,8 @@ extension CBOR {
 
     // MARK: - major 5: a map of pairs of data items
 
-    public static func encodeMap<A: CBOREncodable, B: CBOREncodable>(_ map: [A: B]) -> [UInt8] {
-        var res: [UInt8] = []
+    public static func encodeMap<A: CBOREncodable, B: CBOREncodable>(_ map: [A: B]) -> Data {
+        var res = Data()
         res.reserveCapacity(1 + map.count * (MemoryLayout<A>.size + MemoryLayout<B>.size + 2))
         res = map.count.cborEncode()
         res[0] = res[0] | 0b101_00000
@@ -143,8 +139,8 @@ extension CBOR {
         return res
     }
 
-    public static func encodeOrderedMap(_ map: [OrderedMapEntry]) -> [UInt8] {
-        var res: [UInt8] = []
+    public static func encodeOrderedMap(_ map: [OrderedMapEntry]) -> Data {
+        var res = Data()
         res = map.count.cborEncode()
         res[0] = res[0] | 0b101_00000
         for entry in map {
@@ -154,8 +150,8 @@ extension CBOR {
         return res
     }
 
-    public static func encodeMap<A: CBOREncodable>(_ map: [A: Any?]) throws -> [UInt8] {
-        var res: [UInt8] = []
+    public static func encodeMap<A: CBOREncodable>(_ map: [A: Any?]) throws -> Data {
+        var res = Data()
         res = map.count.cborEncode()
         res[0] = res[0] | 0b101_00000
         try CBOR.encodeMap(map, into: &res)
@@ -164,7 +160,7 @@ extension CBOR {
 
     // MARK: - major 6: tagged values
 
-    public static func encodeTagged<T: CBOREncodable>(tag: Tag, value: T) -> [UInt8] {
+    public static func encodeTagged<T: CBOREncodable>(tag: Tag, value: T) -> Data {
         var res = encodeVarUInt(tag.rawValue)
         res[0] = res[0] | 0b110_00000
         res.append(contentsOf: value.cborEncode())
@@ -173,36 +169,36 @@ extension CBOR {
 
     // MARK: - major 7: floats, simple values, the 'break' stop code
 
-    public static func encodeSimpleValue(_ x: UInt8) -> [UInt8] {
+    public static func encodeSimpleValue(_ x: UInt8) -> Data {
         if x < 24 {
-            return [0b111_00000 | x]
+            return Data([0b111_00000 | x])
         } else {
-            return [0xf8, x]
+            return Data([0xf8, x])
         }
     }
 
-    public static func encodeNull() -> [UInt8] {
-        return [0xf6]
+    public static func encodeNull() -> Data {
+        return Data([0xf6])
     }
 
-    public static func encodeUndefined() -> [UInt8] {
-        return [0xf7]
+    public static func encodeUndefined() -> Data {
+        return Data([0xf7])
     }
 
-    public static func encodeBreak() -> [UInt8] {
-        return [0xff]
+    public static func encodeBreak() -> Data {
+        return Data([0xff])
     }
 
-    public static func encodeFloat(_ x: Float) -> [UInt8] {
-        return [0xfa] + rawBytes(of: x)
+    public static func encodeFloat(_ x: Float) -> Data {
+        return Data([0xfa] + rawBytes(of: x))
     }
 
-    public static func encodeDouble(_ x: Double) -> [UInt8] {
-        return [0xfb] + rawBytes(of: x)
+    public static func encodeDouble(_ x: Double) -> Data {
+        return Data([0xfb] + rawBytes(of: x))
     }
 
-    public static func encodeBool(_ x: Bool) -> [UInt8] {
-        return x ? [0xf5] : [0xf4]
+    public static func encodeBool(_ x: Bool) -> Data {
+        return Data(x ? [0xf5] : [0xf4])
     }
 
     // MARK: - Indefinite length items
@@ -215,37 +211,37 @@ extension CBOR {
     /// The stream API is limited right now, but will get better when Swift allows
     /// one to generically constrain the elements of generic Iterators, in which case
     /// streaming implementation is trivial
-    public static func encodeArrayStreamStart() -> [UInt8] {
-        return [0x9f]
+    public static func encodeArrayStreamStart() -> Data {
+        return Data([0x9f])
     }
 
-    public static func encodeMapStreamStart() -> [UInt8] {
-        return [0xbf]
+    public static func encodeMapStreamStart() -> Data {
+        return Data([0xbf])
     }
 
-    public static func encodeStringStreamStart() -> [UInt8] {
-        return [0x7f]
+    public static func encodeStringStreamStart() -> Data {
+        return Data([0x7f])
     }
 
-    public static func encodeByteStringStreamStart() -> [UInt8] {
-        return [0x5f]
+    public static func encodeByteStringStreamStart() -> Data {
+        return Data([0x5f])
     }
 
     /// This is the same as a CBOR "break" value
-    public static func encodeStreamEnd() -> [UInt8] {
-        return [0xff]
+    public static func encodeStreamEnd() -> Data {
+        return Data([0xff])
     }
 
     // TODO: unify definite and indefinite code
-    public static func encodeArrayChunk<T: CBOREncodable>(_ chunk: [T]) -> [UInt8] {
-        var res: [UInt8] = []
+    public static func encodeArrayChunk<T: CBOREncodable>(_ chunk: [T]) -> Data {
+        var res = Data()
         res.reserveCapacity(chunk.count * MemoryLayout<T>.size)
         res.append(contentsOf: chunk.flatMap{ return $0.cborEncode() })
         return res
     }
 
-    public static func encodeMapChunk<A: CBOREncodable, B: CBOREncodable>(_ map: [A: B]) -> [UInt8] {
-        var res: [UInt8] = []
+    public static func encodeMapChunk<A: CBOREncodable, B: CBOREncodable>(_ map: [A: B]) -> Data {
+        var res = Data()
         let count = map.count
         res.reserveCapacity(count * MemoryLayout<A>.size + count * MemoryLayout<B>.size)
         for (k, v) in map {
@@ -255,15 +251,14 @@ extension CBOR {
         return res
     }
 
-    #if canImport(Foundation)
-    public static func encodeDate(_ date: Date) -> [UInt8] {
+    public static func encodeDate(_ date: Date) -> Data {
         let timeInterval = date.timeIntervalSince1970
         let (integral, fractional) = modf(timeInterval)
 
         let seconds = Int64(integral)
         let nanoseconds = UInt32(fractional * Double(NSEC_PER_SEC))
 
-        var res: [UInt8] = [0b110_00001] // Epoch timestamp tag is 1
+        var res = Data([0b110_00001]) // Epoch timestamp tag is 1
         if seconds < 0 {
             res.append(contentsOf: CBOR.encodeNegativeInt(Int64(timeInterval)))
         } else if seconds > UInt32.max {
@@ -276,9 +271,8 @@ extension CBOR {
 
         return res
     }
-    #endif
 
-    public static func encodeAny(_ any: Any?) throws -> [UInt8] {
+    public static func encodeAny(_ any: Any?) throws -> Data {
         switch any {
         case is Int:
             return (any as! Int).cborEncode()
@@ -302,14 +296,12 @@ extension CBOR {
             return (any as! Bool).cborEncode()
         case is [UInt8]:
             return CBOR.encodeByteString(any as! [UInt8])
-        #if canImport(Foundation)
         case is Data:
-            return CBOR.encodeByteString((any as! Data).map { $0 })
+            return CBOR.encodeData(any as! Data)
         case is Date:
-            return CBOR.encodeDate((any as! Date))
+            return CBOR.encodeDate(any as! Date)
         case is NSNull:
             return CBOR.encodeNull()
-        #endif
         case is [Any]:
             let anyArr = any as! [Any]
             var res = anyArr.count.cborEncode()
@@ -321,7 +313,7 @@ extension CBOR {
             return res
         case is [String: Any]:
             let anyMap = any as! [String: Any]
-            var res: [UInt8] = anyMap.count.cborEncode()
+            var res = anyMap.count.cborEncode()
             res[0] = res[0] | 0b101_00000
             try CBOR.encodeMap(anyMap, into: &res)
             return res
@@ -334,7 +326,7 @@ extension CBOR {
         }
     }
 
-    private static func encodeMap<A: CBOREncodable>(_ map: [A: Any?], into res: inout [UInt8]) throws {
+    private static func encodeMap<A: CBOREncodable>(_ map: [A: Any?], into res: inout Data) throws {
         let sortedKeysWithEncodedKeys = map.keys.map {
             (encoded: $0.cborEncode(), key: $0)
         }.sorted(by: {
