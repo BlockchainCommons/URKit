@@ -16,6 +16,5 @@ func makeMessage(len: Int, seed: String = "Wolf") -> Data {
 
 func makeMessageUR(len: Int, seed: String = "Wolf") -> UR {
     let message = makeMessage(len: len, seed: seed)
-    let cbor = CBOR.data(message).cborEncode()
-    return try! UR(type: "bytes", cbor: cbor)
+    return try! UR(type: "bytes", cbor: CBOR.data(message))
 }

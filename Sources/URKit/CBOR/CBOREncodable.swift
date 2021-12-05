@@ -2,6 +2,7 @@
 // License: Public Domain
 
 import Foundation
+import WolfBase
 
 public protocol CBOREncodable: Hashable {
     func cborEncode() -> Data
@@ -13,7 +14,7 @@ extension CBOR: CBOREncodable {
         switch self {
         case let .unsignedInt(ui): return CBOR.encodeVarUInt(ui)
         case let .negativeInt(ni): return CBOR.encodeNegativeInt(~Int64(bitPattern: ni))
-        case let .data(bs): return CBOR.encodeData(bs)
+        case let .data(d): return CBOR.encodeData(d)
         case let .utf8String(str): return str.cborEncode()
         case let .array(a): return CBOR.encodeArray(a)
         case let .map(m): return CBOR.encodeMap(m)
@@ -29,6 +30,14 @@ extension CBOR: CBOREncodable {
         case let .double(d): return d.cborEncode()
         case .break: return CBOR.encodeBreak()
         }
+    }
+    
+    public var encoded: Data {
+        cborEncode()
+    }
+    
+    public var hex: String {
+        encoded.hex
     }
 }
 

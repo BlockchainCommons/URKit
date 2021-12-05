@@ -33,7 +33,7 @@ public struct UR: Equatable, CustomStringConvertible {
     }
 
     public init(type: String, cbor: CBOR) throws {
-        try self.init(type: type, cbor: cbor.cborEncode())
+        try self.init(type: type, cbor: cbor.encoded)
     }
     
     public init(urString: String) throws {
