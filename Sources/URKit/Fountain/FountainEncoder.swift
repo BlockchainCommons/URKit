@@ -23,13 +23,15 @@ public enum FountainEncoderError: LocalizedError {
 }
 
 public final class FountainEncoder {
-    let messageLen: Int
-    let checksum: UInt32
-    let fragmentLen: Int
-    let fragments: [Data]
+    public let messageLen: Int
+    public let fragmentLen: Int
+    public let maxFragmentLen: Int
     public private(set) var seqNum: UInt32
-    public private(set) var lastPartIndexes: PartIndexes!
     public var seqLen: Int { fragments.count }
+    public private(set) var lastPartIndexes: PartIndexes!
+
+    let checksum: UInt32
+    let fragments: [Data]
 
     /// This becomes `true` when the minimum number of parts
     /// to relay the complete message have been generated
@@ -37,6 +39,11 @@ public final class FountainEncoder {
 
     /// True if only a single part will be generated.
     public var isSinglePart: Bool { seqLen == 1 }
+    
+    /// Returns value `<=` 1.0 if single part, `>` 1.0 if multi-part.
+    public var messagePercentOfMaxFragmentLen: Double {
+        Double(maxFragmentLen) / Double(messageLen)
+    }
 
     public struct Part: CustomStringConvertible, Codable {
         public let seqNum: UInt32
@@ -107,6 +114,7 @@ public final class FountainEncoder {
         assert(message.count <= UInt32.max)
         messageLen = message.count
         checksum = CRC32.checksum(data: message)
+        self.maxFragmentLen = maxFragmentLen
         fragmentLen = Self.findNominalFragmentLength(messageLen: message.count, minFragmentLen: minFragmentLen, maxFragmentLen: maxFragmentLen)
         fragments = Self.partitionMessage(message, fragmentLen: fragmentLen)
         seqNum = firstSeqNum

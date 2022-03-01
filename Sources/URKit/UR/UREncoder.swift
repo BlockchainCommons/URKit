@@ -17,6 +17,9 @@ public final class UREncoder {
     private let ur: UR
     private let fountainEncoder: FountainEncoder
 
+    public var messageLen: Int { fountainEncoder.messageLen }
+    public var fragmentLen: Int { fountainEncoder.fragmentLen }
+    public var maxFragmentLen: Int { fountainEncoder.maxFragmentLen }
     public var seqNum: UInt32 { fountainEncoder.seqNum }
     public var seqLen: Int { fountainEncoder.seqLen }
     public var lastPartIndexes: Set<Int> { fountainEncoder.lastPartIndexes }
@@ -35,6 +38,11 @@ public final class UREncoder {
     /// `true` if this UR can be contained in a single part. If `true`, repeated
     /// calls to `nextPart()` will all return the same single-part UR.
     public var isSinglePart: Bool { fountainEncoder.isSinglePart }
+    
+    /// Returns value `<=` 1.0 if single part, `>` 1.0 if multi-part.
+    public var messagePercentOfMaxFragmentLen: Double {
+        fountainEncoder.messagePercentOfMaxFragmentLen
+    }
 
     public func nextPart() -> String {
         let part = fountainEncoder.nextPart()
