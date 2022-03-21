@@ -24,12 +24,12 @@ public enum CBORDecodingError : LocalizedError {
 }
 
 extension CBOR {
-    static func decode(_ input: Data) throws -> CBOR? {
-        return try CBORDecoder(input: input.bytes).decodeItem()
+    static func decode(_ input: Data, orderedKeys: Bool = false) throws -> CBOR? {
+        return try CBORDecoder(input: input.bytes, orderedKeys: orderedKeys).decodeItem()
     }
 
-    static func decode(_ input: [UInt8]) throws -> CBOR? {
-        return try CBORDecoder(input: input).decodeItem()
+    static func decode(_ input: [UInt8], orderedKeys: Bool = false) throws -> CBOR? {
+        return try CBORDecoder(input: input, orderedKeys: orderedKeys).decodeItem()
     }
 }
 
@@ -51,17 +51,21 @@ extension CBOR {
 
 public class CBORDecoder {
     private var istream : CBORInputStream
+    private let orderedKeys: Bool
 
-    public init(stream: CBORInputStream) {
+    public init(stream: CBORInputStream, orderedKeys: Bool = false) {
         istream = stream
+        self.orderedKeys = orderedKeys
     }
 
-    public init(input: ArraySlice<UInt8>) {
+    public init(input: ArraySlice<UInt8>, orderedKeys: Bool = false) {
         istream = ArraySliceUInt8(slice: input)
+        self.orderedKeys = orderedKeys
     }
 
-    public init(input: [UInt8]) {
+    public init(input: [UInt8], orderedKeys: Bool = false) {
         istream = ArrayUInt8(array: input)
+        self.orderedKeys = orderedKeys
     }
 
     func readBinaryNumber<T>(_ type: T.Type) throws -> T {
@@ -119,6 +123,16 @@ public class CBORDecoder {
         return result
     }
 
+    private func readNOrderedPairs(_ n: Int) throws -> [OrderedMapEntry] {
+        var result: [OrderedMapEntry] = []
+        for _ in (0..<n) {
+            guard let key  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
+            guard let val  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
+            result.append(.init(key: key, value: val))
+        }
+        return result
+    }
+
     func readPairsUntilBreak() throws -> [CBOR : CBOR] {
         var result: [CBOR: CBOR] = [:]
         var key = try decodeItem()
@@ -130,6 +144,24 @@ public class CBORDecoder {
             guard let okey = key else { throw CBORDecodingError.unfinishedSequence }
             guard let oval = val else { throw CBORDecodingError.unfinishedSequence }
             result[okey] = oval
+            do { key = try decodeItem() } catch CBORDecodingError.unfinishedSequence { key = nil }
+            guard (key != CBOR.break) else { break } // don't eat the val after the break!
+            do { val = try decodeItem() } catch CBORDecodingError.unfinishedSequence { val = nil }
+        }
+        return result
+    }
+
+    func readOrderedPairsUntilBreak() throws -> [OrderedMapEntry] {
+        var result: [OrderedMapEntry] = []
+        var key = try decodeItem()
+        if key == CBOR.break {
+            return result
+        }
+        var val = try decodeItem()
+        while key != CBOR.break {
+            guard let okey = key else { throw CBORDecodingError.unfinishedSequence }
+            guard let oval = val else { throw CBORDecodingError.unfinishedSequence }
+            result.append(.init(key: okey, value: oval))
             do { key = try decodeItem() } catch CBORDecodingError.unfinishedSequence { key = nil }
             guard (key != CBOR.break) else { break } // don't eat the val after the break!
             do { val = try decodeItem() } catch CBORDecodingError.unfinishedSequence { val = nil }
@@ -171,17 +203,25 @@ public class CBORDecoder {
 
         // arrays
         case 0x80...0x9b:
-            let numBytes = try readLength(b, base: 0x80)
-            return CBOR.array(try readN(numBytes))
+            let count = try readLength(b, base: 0x80)
+            return CBOR.array(try readN(count))
         case 0x9f:
             return CBOR.array(try readUntilBreak())
 
         // pairs
         case 0xa0...0xbb:
-            let numBytes = try readLength(b, base: 0xa0)
-            return CBOR.map(try readNPairs(numBytes))
+            let count = try readLength(b, base: 0xa0)
+            if orderedKeys {
+                return CBOR.orderedMap(try readNOrderedPairs(count))
+            } else {
+                return CBOR.map(try readNPairs(count))
+            }
         case 0xbf:
-            return CBOR.map(try readPairsUntilBreak())
+            if orderedKeys {
+                return CBOR.orderedMap(try readOrderedPairsUntilBreak())
+            } else {
+                return CBOR.map(try readPairsUntilBreak())
+            }
 
         // tagged values
         case 0xc0...0xdb:
