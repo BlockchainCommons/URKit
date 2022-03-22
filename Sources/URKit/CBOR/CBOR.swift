@@ -13,6 +13,93 @@ public struct OrderedMapEntry: Hashable {
     }
 }
 
+enum DiagItem {
+    case item(String)
+    case group(String, String, [DiagItem])
+    
+    func format(level: Int = 0, separator: String = "") -> String {
+        switch self {
+        case .item(let string):
+            return formatLine(level: level, string: string, separator: separator)
+        case .group(let begin, let end, let items):
+            var lines: [String] = []
+            lines.append(formatLine(level: level, string: begin))
+            for (index, item) in items.enumerated() {
+                let separator = index == items.count - 1 ? "" : ","
+                lines.append(item.format(level: level + 1, separator: separator))
+            }
+            lines.append(formatLine(level: level, string: end, separator: separator))
+            return lines.joined(separator: "\n")
+        }
+    }
+    
+    private func formatLine(level: Int, string: String, separator: String = "") -> String {
+        String(repeating: " ", count: level * 3) + string + separator
+    }
+}
+
+extension CBOR {
+    public var diag: String {
+        diagItem.format()
+    }
+    
+    var diagItem: DiagItem {
+        switch self {
+        case .unsignedInt(let n):
+            return .item(String(n))
+        case .negativeInt(let n):
+            let ni = ~Int64(bitPattern: n)
+            return .item(String(ni))
+        case .data(let d):
+            return .item(d.hex.flanked("h'", "'"))
+        case .utf8String(let s):
+            return .item(s.flanked("\""))
+        case .simple(let v):
+            return .item(String(v))
+        case .boolean(let b):
+            return .item(String(b))
+        case .null:
+            return .item("null")
+        case .undefined:
+            return .item("undefined")
+        case .half(let f):
+            return .item(String(f))
+        case .float(let f):
+            return .item(String(f))
+        case .double(let f):
+            return .item(String(f))
+        case .tagged(let tag, let cbor):
+            return .group(
+                String(tag.rawValue) + "(", ")",
+                [cbor.diagItem]
+            )
+        case .array(let a):
+            return .group(
+                "[", "]",
+                a.map { $0.diagItem }
+            )
+        case .map(let m):
+            return .group(
+                "{", "}",
+                m.map { (key, value) in
+                    [key.diagItem, value.diagItem]
+                }.flatMap { $0 }
+            )
+        case .orderedMap(let m):
+            return .group(
+                "{", "}",
+                m.map { e in
+                    [e.key.diagItem, e.value.diagItem]
+                }.flatMap { $0 }
+            )
+        case .date(let date):
+            return .item(date.ISO8601Format().flanked("1(", ")"))
+        default:
+            fatalError()
+        }
+    }
+}
+
 struct DumpItem {
     let level: Int
     let data: [Data]
