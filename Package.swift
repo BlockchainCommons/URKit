@@ -1,11 +1,11 @@
-// swift-tools-version:5.4
+// swift-tools-version:5.5
 
 import PackageDescription
 
 let package = Package(
     name: "URKit",
     platforms: [
-        .macOS(.v10_15),
+        .macOS(.v12),
         .iOS(.v13)
     ],
     products: [

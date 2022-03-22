@@ -128,13 +128,18 @@ extension CBOR {
     public static func encodeByteString(_ bs: [UInt8], _ context: CBORContext) -> Data {
         switch context {
         case .binary:
-            var res = bs.count.cborEncode(context)
-            res[0] = res[0] | 0b010_00000
+            var res = byteStringHeader(count: bs.count)
             res.append(contentsOf: bs)
             return res
         case .diagnostic:
             return Data(bs).hex.flanked("h'", "'").utf8Data
         }
+    }
+    
+    static func byteStringHeader(count: Int) -> Data {
+        var res = count.cborEncode(.binary)
+        res[0] = res[0] | 0b010_00000
+        return res
     }
 
     public static func encodeData(_ data: Data, _ context: CBORContext) -> Data {
@@ -143,13 +148,18 @@ extension CBOR {
 
     // MARK: - major 3: UTF8 string
 
+    static func stringHeader(str: String) -> Data {
+        let utf8array = Array(str.utf8)
+        var res = utf8array.count.cborEncode(.binary)
+        res[0] = res[0] | 0b011_00000
+        return res
+    }
+    
     public static func encodeString(_ str: String, _ context: CBORContext) -> Data {
         switch context {
         case .binary:
-            let utf8array = Array(str.utf8)
-            var res = utf8array.count.cborEncode(context)
-            res[0] = res[0] | 0b011_00000
-            res.append(contentsOf: utf8array)
+            var res = stringHeader(str: str)
+            res.append(contentsOf: str.utf8Data)
             return res
         case .diagnostic:
             return str.flanked("\"").utf8Data
@@ -158,11 +168,16 @@ extension CBOR {
 
     // MARK: - major 4: array of data items
 
+    public static func arrayHeader(count: Int) -> Data {
+        var res = count.cborEncode(.binary)
+        res[0] = res[0] | 0b100_00000
+        return res
+    }
+    
     public static func encodeArray<T: CBOREncodable>(_ arr: [T], _ context: CBORContext) -> Data {
         switch context {
         case .binary:
-            var res = arr.count.cborEncode(context)
-            res[0] = res[0] | 0b100_00000
+            var res = arrayHeader(count: arr.count)
             res.append(contentsOf: arr.flatMap{ return $0.cborEncode(context) })
             return res
         case .diagnostic:
@@ -172,13 +187,18 @@ extension CBOR {
 
     // MARK: - major 5: a map of pairs of data items
 
+    public static func mapHeader(count: Int) -> Data {
+        var res = Data()
+        res = count.cborEncode(.binary)
+        res[0] = res[0] | 0b101_00000
+        return res
+    }
+    
     public static func encodeMap<A: CBOREncodable, B: CBOREncodable>(_ map: [A: B], _ context: CBORContext) -> Data {
         switch context {
         case .binary:
-            var res = Data()
+            var res = mapHeader(count: map.count)
             res.reserveCapacity(1 + map.count * (MemoryLayout<A>.size + MemoryLayout<B>.size + 2))
-            res = map.count.cborEncode(context)
-            res[0] = res[0] | 0b101_00000
             for (k, v) in map {
                 res.append(contentsOf: k.cborEncode(context))
                 res.append(contentsOf: v.cborEncode(context))
@@ -197,9 +217,7 @@ extension CBOR {
     public static func encodeOrderedMap(_ map: [OrderedMapEntry], _ context: CBORContext) -> Data {
         switch context {
         case .binary:
-            var res = Data()
-            res = map.count.cborEncode(context)
-            res[0] = res[0] | 0b101_00000
+            var res = mapHeader(count: map.count)
             for entry in map {
                 res.append(contentsOf: entry.key.cborEncode(context))
                 res.append(contentsOf: entry.value.cborEncode(context))
@@ -234,11 +252,16 @@ extension CBOR {
 
     // MARK: - major 6: tagged values
 
+    public static func tagHeader(tag: Tag) -> Data {
+        var res = encodeVarUInt(tag.rawValue, .binary)
+        res[0] = res[0] | 0b110_00000
+        return res
+    }
+    
     public static func encodeTagged<T: CBOREncodable>(tag: Tag, value: T, _ context: CBORContext) -> Data {
         switch context {
         case .binary:
-            var res = encodeVarUInt(tag.rawValue, context)
-            res[0] = res[0] | 0b110_00000
+            var res = tagHeader(tag: tag)
             res.append(contentsOf: value.cborEncode(context))
             return res
         case .diagnostic:
@@ -389,6 +412,10 @@ extension CBOR {
         }
         return res
     }
+    
+    public static func dateHeader() -> Data {
+        Data([0b110_00001])
+    }
 
     public static func encodeDate(_ date: Date, _ context: CBORContext) -> Data {
         let timeInterval = date.timeIntervalSince1970
@@ -411,7 +438,7 @@ extension CBOR {
         switch context {
         case .binary:
             // Epoch timestamp tag is 1
-            return Data([0b110_00001]) + res
+            return dateHeader() + res
         case .diagnostic:
             return res.utf8!.flanked("1(", ")").utf8Data
         }

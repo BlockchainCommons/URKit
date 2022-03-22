@@ -34,15 +34,15 @@ extension CBOR {
 }
 
 extension CBOR {
-    public init(_ input: Data) throws {
-        guard let c = try Self.decode(input) else {
+    public init(_ input: Data, orderedKeys: Bool = false) throws {
+        guard let c = try Self.decode(input, orderedKeys: orderedKeys) else {
             throw CBORDecodingError.unfinishedSequence
         }
         self = c
     }
 
-    public init(_ input: [UInt8]) throws {
-        guard let c = try Self.decode(input) else {
+    public init(_ input: [UInt8], orderedKeys: Bool = false) throws {
+        guard let c = try Self.decode(input, orderedKeys: orderedKeys) else {
             throw CBORDecodingError.unfinishedSequence
         }
         self = c
@@ -225,9 +225,9 @@ public class CBORDecoder {
 
         // tagged values
         case 0xc0...0xdb:
-            let tag = try readVarUInt(b, base: 0xc0)
+            let tagRawValue = try readVarUInt(b, base: 0xc0)
             guard let item = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
-            if tag == 1 {
+            if tagRawValue == 1 {
                 // Per https://datatracker.ietf.org/doc/html/rfc8949#section-3.4.2
                 var seconds: TimeInterval
                 switch item {
@@ -244,7 +244,7 @@ public class CBORDecoder {
                 }
                 let date = Date(timeIntervalSince1970: seconds)
                 return CBOR.date(date)
-            } else if tag == 100 {
+            } else if tagRawValue == 100 {
                 // Per https://datatracker.ietf.org/doc/html/rfc8943
                 let days: Int?
                 switch item {
@@ -261,7 +261,7 @@ public class CBORDecoder {
                 let date = Calendar.current.date(byAdding: DateComponents(day: days), to: Date(timeIntervalSince1970: 0))!
                 return CBOR.date(date)
             }
-            return CBOR.tagged(CBOR.Tag(rawValue: tag), item)
+            return CBOR.tagged(CBOR.Tag.knownTag(for: tagRawValue), item)
 
         case 0xe0...0xf3: return CBOR.simple(b - 0xe0)
         case 0xf4: return CBOR.boolean(false)

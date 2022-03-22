@@ -13,6 +13,174 @@ public struct OrderedMapEntry: Hashable {
     }
 }
 
+struct DumpItem {
+    let level: Int
+    let data: [Data]
+    let note: String?
+    
+    init(level: Int, data: [Data], note: String? = nil) {
+        self.level = level
+        self.data = data
+        self.note = note
+    }
+
+    init(level: Int, data: Data, note: String? = nil) {
+        self.init(level: level, data: [data], note: note)
+    }
+    
+    func format(noteColumn: Int) -> String {
+        let column1 = formatFirstColumn()
+        let column2: String
+        let padding: String
+        if let note = note {
+            let paddingCount = max(1, min(40, noteColumn) - column1.count + 1)
+            padding = String(repeating: " ", count: paddingCount)
+            column2 = "# " + note
+        } else {
+            padding = ""
+            column2 = ""
+        }
+        return column1 + padding + column2
+    }
+    
+    func formatFirstColumn() -> String {
+        let indent = String(repeating: " ", count: level * 3)
+        let hex = data.map { $0.hex }.filter { !$0.isEmpty }.joined(separator: " ")
+        return indent + hex
+    }
+}
+
+extension CBOR {
+    public var dump: String {
+        let items = dumpItems(level: 0)
+        let noteColumn = items.reduce(into: 0) { largest, item in
+            largest = max(largest, item.formatFirstColumn().count)
+        }
+        let lines = items.map { $0.format(noteColumn: noteColumn) }
+        return lines.joined(separator: "\n")
+    }
+    
+    func dumpItems(level: Int) -> [DumpItem] {
+        switch self {
+        case .unsignedInt(let n):
+            return [DumpItem(level: level, data: self.encoded, note: "unsigned(\(n))")]
+        case .negativeInt(let n):
+            let ni = ~Int64(bitPattern: n)
+            return [DumpItem(level: level, data: self.encoded, note: "negative(\(ni))")]
+        case .data(let d):
+            let note = d.utf8?.sanitized?.flanked("\"")
+            return [
+                DumpItem(level: level, data: CBOR.byteStringHeader(count: d.count), note: "bytes(\(d.count))"),
+                DumpItem(level: level + 1, data: d, note: note)
+            ]
+        case .utf8String(let s):
+            let stringHeader = CBOR.stringHeader(str: s)
+            return [
+                DumpItem(level: level, data: [Data(of: stringHeader.first!), stringHeader.dropFirst()], note: "text(\(s.utf8Data.count))"),
+                DumpItem(level: level + 1, data: s.utf8Data, note: s.flanked("\""))
+            ]
+        case .simple(let v):
+            let data = CBOR.encodeSimpleValue(v, .binary)
+            let note = CBOR.encodeSimpleValue(v, .diagnostic).utf8!.flanked("simple(", ")")
+            return [
+                DumpItem(level: level, data: data, note: note)
+            ]
+        case .boolean, .null, .undefined:
+            return [
+                DumpItem(level: level, data: encoded, note: self.cborEncode(.diagnostic).utf8!)
+            ]
+        case .half, .float, .double:
+            return [
+                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: self.cborEncode(.diagnostic).utf8!)
+            ]
+        case .tagged(let tag, let cbor):
+            let tagHeader = CBOR.tagHeader(tag: tag)
+            var noteComponents: [String] = [
+                String(tag.rawValue).flanked("tag(", ")")
+            ]
+            if let name = tag.name {
+                noteComponents.append(name)
+            }
+            let tagNote = noteComponents.joined(separator: " ")
+            return [
+                [
+                    DumpItem(level: level, data: [Data(of: tagHeader.first!), tagHeader.dropFirst()], note: tagNote)
+                ],
+                cbor.dumpItems(level: level + 1)
+            ].flatMap { $0 }
+        case .array(let array):
+            let arrayHeader = CBOR.arrayHeader(count: array.count)
+            let arrayHeaderData = [Data(of: arrayHeader.first!), arrayHeader.dropFirst()]
+            return [
+                [
+                    DumpItem(level: level, data: arrayHeaderData, note: String(array.count).flanked("array(", ")"))
+                ],
+                array.flatMap { $0.dumpItems(level: level + 1) }
+            ].flatMap { $0 }
+        case .map(let m):
+            let mapHeader = CBOR.mapHeader(count: m.count)
+            let mapHeaderData = [Data(of: mapHeader.first!), mapHeader.dropFirst()]
+            return [
+                [
+                    DumpItem(level: level, data: mapHeaderData, note: String(m.count).flanked("map(", ")"))
+                ],
+                m.flatMap {
+                    [
+                        $0.key.dumpItems(level: level + 1),
+                        $0.value.dumpItems(level: level + 1)
+                    ].flatMap { $0 }
+                }
+            ].flatMap { $0 }
+        case .orderedMap(let m):
+            let mapHeader = CBOR.mapHeader(count: m.count)
+            let mapHeaderData = [Data(of: mapHeader.first!), mapHeader.dropFirst()]
+            return [
+                [
+                    DumpItem(level: level, data: mapHeaderData, note: String(m.count).flanked("map(", ")"))
+                ],
+                m.flatMap {
+                    [
+                        $0.key.dumpItems(level: level + 1),
+                        $0.value.dumpItems(level: level + 1)
+                    ].flatMap { $0 }
+                }
+            ].flatMap { $0 }
+        case .date(let date):
+            let dateHeader = CBOR.dateHeader()
+            let dateHeaderData = [Data(of: dateHeader.first!), dateHeader.dropFirst()]
+            let encodedDate = CBOR.encodeDate(date, .binary)
+            let rawEncodedDate = encodedDate.dropFirst(dateHeader.count)
+            let components = [dateHeaderData, [rawEncodedDate]].flatMap { $0 }
+            return [
+                DumpItem(level: level, data: components, note: date.description.flanked("date(", ")"))
+            ]
+        default:
+            fatalError()
+        }
+    }
+}
+
+extension Character {
+    var isPrintable: Bool {
+        !isASCII || (32...126).contains(asciiValue!)
+    }
+}
+
+extension String {
+    var sanitized: String? {
+        var hasPrintable = false
+        let s = self.map { c -> Character in
+            if c.isPrintable {
+                hasPrintable = true
+                return c
+            } else {
+                return "."
+            }
+        }
+        return !hasPrintable ? nil : String(s)
+    }
+}
+
 public indirect enum CBOR : Equatable, Hashable,
         ExpressibleByNilLiteral, ExpressibleByIntegerLiteral, ExpressibleByStringLiteral,
         ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral, ExpressibleByBooleanLiteral,
@@ -143,44 +311,96 @@ public indirect enum CBOR : Equatable, Hashable,
 
     public struct Tag: RawRepresentable, Equatable, Hashable {
         public let rawValue: UInt64
-
+        public let name: String?
+        
+        public static func knownTag(for rawValue: UInt64) -> Tag {
+            knownTagsByRawValue[rawValue] ?? Tag(rawValue: rawValue)
+        }
+        
+        public static func setKnownTag(_ tag: Tag) {
+            knownTagsByRawValue[tag.rawValue] = tag
+        }
+        
         public init(rawValue: UInt64) {
             self.rawValue = rawValue
+            self.name = nil
+        }
+        
+        public init(_ rawValue: UInt64, _ name: String) {
+            self.rawValue = rawValue
+            self.name = name
         }
 
         public var hashValue : Int {
             return rawValue.hashValue
         }
+        
+        public static func ==(lhs: Tag, rhs: Tag) -> Bool {
+            lhs.rawValue == rhs.rawValue
+        }
+        
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(rawValue)
+        }
     }
 }
 
+var knownTagsByRawValue: [UInt64: CBOR.Tag] = {
+    knownTags.reduce(into: [UInt64: CBOR.Tag]()) {
+        $0[$1.rawValue] = $1
+    }
+}()
+
+var knownTags: [CBOR.Tag] = [
+    .standardDateTimeString,
+    .epochBasedDateTime,
+    .positiveBignum,
+    .negativeBignum,
+    .decimalFraction,
+    .bigfloat,
+    
+    .expectedConversionToBase64URLEncoding,
+    .expectedConversionToBase64Encoding,
+    .expectedConversionToBase16Encoding,
+    .encodedCBORDataItem,
+
+    .uri,
+    .base64Url,
+    .base64,
+    .regularExpression,
+    .mimeMessage,
+    .uuid,
+    
+    .selfDescribeCBOR
+]
+
 extension CBOR.Tag {
-    public static let standardDateTimeString = CBOR.Tag(0)
-    public static let epochBasedDateTime = CBOR.Tag(1)
-    public static let positiveBignum = CBOR.Tag(2)
-    public static let negativeBignum = CBOR.Tag(3)
-    public static let decimalFraction = CBOR.Tag(4)
-    public static let bigfloat = CBOR.Tag(5)
+    public static let standardDateTimeString = CBOR.Tag(0, "standard-date-time")
+    public static let epochBasedDateTime = CBOR.Tag(1, "epoch-date-time")
+    public static let positiveBignum = CBOR.Tag(2, "positive-bignum")
+    public static let negativeBignum = CBOR.Tag(3, "negative-bignum")
+    public static let decimalFraction = CBOR.Tag(4, "decimal-fraction")
+    public static let bigfloat = CBOR.Tag(5, "bigfloat")
 
     // 6...20 unassigned
 
-    public static let expectedConversionToBase64URLEncoding = CBOR.Tag(21)
-    public static let expectedConversionToBase64Encoding = CBOR.Tag(22)
-    public static let expectedConversionToBase16Encoding = CBOR.Tag(23)
-    public static let encodedCBORDataItem = CBOR.Tag(24)
+    public static let expectedConversionToBase64URLEncoding = CBOR.Tag(21, "to-base64-url")
+    public static let expectedConversionToBase64Encoding = CBOR.Tag(22, "to-base64")
+    public static let expectedConversionToBase16Encoding = CBOR.Tag(23, "to-hex")
+    public static let encodedCBORDataItem = CBOR.Tag(24, "embedded-cbor")
 
     // 25...31 unassigned
 
-    public static let uri = CBOR.Tag(32)
-    public static let base64Url = CBOR.Tag(33)
-    public static let base64 = CBOR.Tag(34)
-    public static let regularExpression = CBOR.Tag(35)
-    public static let mimeMessage = CBOR.Tag(36)
-    public static let uuid = CBOR.Tag(37)
+    public static let uri = CBOR.Tag(32, "uri")
+    public static let base64Url = CBOR.Tag(33, "base64-url")
+    public static let base64 = CBOR.Tag(34, "base-64")
+    public static let regularExpression = CBOR.Tag(35, "regex")
+    public static let mimeMessage = CBOR.Tag(36, "mime-message")
+    public static let uuid = CBOR.Tag(37, "uuid")
 
     // 38...55798 unassigned
 
-    public static let selfDescribeCBOR = CBOR.Tag(55799)
+    public static let selfDescribeCBOR = CBOR.Tag(55799, "self-described-cbor")
 }
 
 extension CBOR.Tag: ExpressibleByIntegerLiteral {
