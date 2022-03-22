@@ -3,13 +3,62 @@
 
 import Foundation
 
-public struct OrderedMapEntry: Hashable {
-    public let key: CBOR
-    public let value: CBOR
+public struct OrderedMap: Hashable, ExpressibleByDictionaryLiteral, Sequence {
+    public var elements: [Entry]
+    
+    public init(_ elements: [Entry]) {
+        self.elements = elements
+    }
+    
+    public init(dictionaryLiteral elements: (CBOR, CBOR)...) {
+        self.elements = elements.map { Entry(key: $0.0, value: $0.1)}
+    }
+    
+    public var count: Int {
+        elements.count
+    }
+    
+    mutating public func append(_ e: (CBOR, CBOR)) {
+        elements.append(.init(key: e.0, value: e.1))
+    }
+    
+    mutating public func append(_ k: CBOR, _ v: CBOR) {
+        elements.append(.init(key: k, value: v))
+    }
+    
+    public struct Entry: Hashable {
+        public let key: CBOR
+        public let value: CBOR
 
-    public init(key: CBOR, value: CBOR) {
-        self.key = key
-        self.value = value
+        public init(key: CBOR, value: CBOR) {
+            self.key = key
+            self.value = value
+        }
+        
+        public init(_ e: (CBOR, CBOR)) {
+            self.init(key: e.0, value: e.1)
+        }
+    }
+    
+    public func makeIterator() -> Iterator {
+        Iterator(elements: elements)
+    }
+    
+    public class Iterator: IteratorProtocol {
+        let elements: [Entry]
+        var iterator: IndexingIterator<[Entry]>
+        
+        init(elements: [Entry]) {
+            self.elements = elements
+            self.iterator = elements.makeIterator()
+        }
+        
+        public func next() -> (CBOR, CBOR)? {
+            guard let e = iterator.next() else {
+                return nil
+            }
+            return (e.key, e.value)
+        }
     }
 }
 
@@ -88,8 +137,8 @@ extension CBOR {
         case .orderedMap(let m):
             return .group(
                 "{", "}",
-                m.map { e in
-                    [e.key.diagItem, e.value.diagItem]
+                m.map { (k, v) in
+                    [k.diagItem, v.diagItem]
                 }.flatMap { $0 }
             )
         case .date(let date):
@@ -241,10 +290,10 @@ extension CBOR {
                 [
                     DumpItem(level: level, data: mapHeaderData, note: String(m.count).flanked("map(", ")"))
                 ],
-                m.flatMap {
+                m.flatMap { (k, v) in
                     [
-                        $0.key.dumpItems(level: level + 1),
-                        $0.value.dumpItems(level: level + 1)
+                        k.dumpItems(level: level + 1),
+                        v.dumpItems(level: level + 1)
                     ].flatMap { $0 }
                 }
             ].flatMap { $0 }
@@ -295,7 +344,7 @@ public indirect enum CBOR : Equatable, Hashable,
     case utf8String(String)
     case array([CBOR])
     case map([CBOR : CBOR])
-    case orderedMap([OrderedMapEntry])
+    case orderedMap(OrderedMap)
     case tagged(Tag, CBOR)
     case simple(UInt8)
     case boolean(Bool)
@@ -315,7 +364,7 @@ public indirect enum CBOR : Equatable, Hashable,
         case let .utf8String(l):  l.hash(into: &hasher)
         case let .array(l):       CBORUtil.djb2Hash(l.map { $0.hashValue }).hash(into: &hasher)
         case let .map(l):         CBORUtil.djb2Hash(l.map { $0.hashValue &+ $1.hashValue }).hash(into: &hasher)
-        case let .orderedMap(l):  CBORUtil.djb2Hash(l.map { $0.hashValue }).hash(into: &hasher)
+        case let .orderedMap(l):  CBORUtil.djb2Hash(l.map { $0.0.hashValue &+ $0.1.hashValue }).hash(into: &hasher)
         case let .tagged(t, l):   t.hash(into: &hasher)
                                   l.hash(into: &hasher)
         case let .simple(l):      l.hash(into: &hasher)

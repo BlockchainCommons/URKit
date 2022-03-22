@@ -123,12 +123,12 @@ public class CBORDecoder {
         return result
     }
 
-    private func readNOrderedPairs(_ n: Int) throws -> [OrderedMapEntry] {
-        var result: [OrderedMapEntry] = []
+    private func readNOrderedPairs(_ n: Int) throws -> OrderedMap {
+        var result: OrderedMap = [:]
         for _ in (0..<n) {
             guard let key  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
             guard let val  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
-            result.append(.init(key: key, value: val))
+            result.append(key, val)
         }
         return result
     }
@@ -151,8 +151,8 @@ public class CBORDecoder {
         return result
     }
 
-    func readOrderedPairsUntilBreak() throws -> [OrderedMapEntry] {
-        var result: [OrderedMapEntry] = []
+    func readOrderedPairsUntilBreak() throws -> OrderedMap {
+        var result: OrderedMap = [:]
         var key = try decodeItem()
         if key == CBOR.break {
             return result
@@ -161,7 +161,7 @@ public class CBORDecoder {
         while key != CBOR.break {
             guard let okey = key else { throw CBORDecodingError.unfinishedSequence }
             guard let oval = val else { throw CBORDecodingError.unfinishedSequence }
-            result.append(.init(key: okey, value: oval))
+            result.append(okey, oval)
             do { key = try decodeItem() } catch CBORDecodingError.unfinishedSequence { key = nil }
             guard (key != CBOR.break) else { break } // don't eat the val after the break!
             do { val = try decodeItem() } catch CBORDecodingError.unfinishedSequence { val = nil }

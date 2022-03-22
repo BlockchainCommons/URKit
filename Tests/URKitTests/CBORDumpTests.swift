@@ -99,7 +99,7 @@ class CBORDumpTests: XCTestCase {
            03 # unsigned(3)
            04 # unsigned(4)
         """
-        let cbor = CBOR.orderedMap([.init(key: 1, value: 2), .init(key: 3, value: 4)])
+        let cbor = CBOR.orderedMap([1: 2, 3: 4])
         let d = cbor.dump
         XCTAssertEqual(d, expected)
     }

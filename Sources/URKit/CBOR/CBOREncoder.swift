@@ -159,9 +159,9 @@ extension CBOR {
         return res
     }
 
-    public static func encodeOrderedMap(_ map: [OrderedMapEntry]) -> Data {
+    public static func encodeOrderedMap(_ map: OrderedMap) -> Data {
         var res = mapHeader(count: map.count)
-        for entry in map {
+        for entry in map.elements {
             res.append(contentsOf: entry.key.cborEncode())
             res.append(contentsOf: entry.value.cborEncode())
         }
