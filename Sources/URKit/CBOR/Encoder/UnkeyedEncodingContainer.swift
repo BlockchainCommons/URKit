@@ -6,7 +6,6 @@ import Foundation
 extension _CBOREncoder {
     final class UnkeyedContainer {
         private var storage: [CBOREncodingContainer] = []
-        private var context: CBORContext
 
         var count: Int {
             return storage.count
@@ -20,41 +19,40 @@ extension _CBOREncoder {
 
         var userInfo: [CodingUserInfoKey: Any]
 
-        init(codingPath: [CodingKey], userInfo: [CodingUserInfoKey : Any], _ context: CBORContext) {
+        init(codingPath: [CodingKey], userInfo: [CodingUserInfoKey : Any]) {
             self.codingPath = codingPath
             self.userInfo = userInfo
-            self.context = context
         }
     }
 }
 
 extension _CBOREncoder.UnkeyedContainer: UnkeyedEncodingContainer {
     func encodeNil() throws {
-        var container = self.nestedSingleValueContainer(context)
+        var container = self.nestedSingleValueContainer()
         try container.encodeNil()
     }
 
     func encode<T: Encodable>(_ value: T) throws {
-        var container = self.nestedSingleValueContainer(context)
+        var container = self.nestedSingleValueContainer()
         try container.encode(value)
     }
 
-    private func nestedSingleValueContainer(_ context: CBORContext) -> SingleValueEncodingContainer {
-        let container = _CBOREncoder.SingleValueContainer(codingPath: self.nestedCodingPath, userInfo: self.userInfo, context)
+    private func nestedSingleValueContainer() -> SingleValueEncodingContainer {
+        let container = _CBOREncoder.SingleValueContainer(codingPath: self.nestedCodingPath, userInfo: self.userInfo)
         self.storage.append(container)
 
         return container
     }
 
     func nestedContainer<NestedKey: CodingKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> {
-        let container = _CBOREncoder.KeyedContainer<NestedKey>(codingPath: self.nestedCodingPath, userInfo: self.userInfo, context)
+        let container = _CBOREncoder.KeyedContainer<NestedKey>(codingPath: self.nestedCodingPath, userInfo: self.userInfo)
         self.storage.append(container)
 
         return KeyedEncodingContainer(container)
     }
 
     func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
-        let container = _CBOREncoder.UnkeyedContainer(codingPath: self.nestedCodingPath, userInfo: self.userInfo, context)
+        let container = _CBOREncoder.UnkeyedContainer(codingPath: self.nestedCodingPath, userInfo: self.userInfo)
         self.storage.append(container)
 
         return container
@@ -68,7 +66,7 @@ extension _CBOREncoder.UnkeyedContainer: UnkeyedEncodingContainer {
 extension _CBOREncoder.UnkeyedContainer: CBOREncodingContainer {
     var data: Data {
         // TODO: Check that this works for all sizes of array
-        var data = storage.count.cborEncode(.binary)
+        var data = storage.count.cborEncode()
         data[0] = data[0] | 0b100_00000
         for container in storage {
             data.append(contentsOf: container.data)

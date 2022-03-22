@@ -167,18 +167,34 @@ extension CBOR {
                 DumpItem(level: level + 1, data: s.utf8Data, note: s.flanked("\""))
             ]
         case .simple(let v):
-            let data = CBOR.encodeSimpleValue(v, .binary)
-            let note = CBOR.encodeSimpleValue(v, .diagnostic).utf8!.flanked("simple(", ")")
+            let data = CBOR.encodeSimpleValue(v)
+            let note = String(v).flanked("simple(", ")")
             return [
                 DumpItem(level: level, data: data, note: note)
             ]
-        case .boolean, .null, .undefined:
+        case .boolean(let b):
             return [
-                DumpItem(level: level, data: encoded, note: self.cborEncode(.diagnostic).utf8!)
+                DumpItem(level: level, data: encoded, note: String(b))
             ]
-        case .half, .float, .double:
+        case .null:
             return [
-                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: self.cborEncode(.diagnostic).utf8!)
+                DumpItem(level: level, data: encoded, note: "null")
+            ]
+        case .undefined:
+            return [
+                DumpItem(level: level, data: encoded, note: "undefined")
+            ]
+        case .half(let f):
+            return [
+                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: String(f))
+            ]
+        case .float(let f):
+            return [
+                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: String(f))
+            ]
+        case .double(let f):
+            return [
+                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: String(f))
             ]
         case .tagged(let tag, let cbor):
             let tagHeader = CBOR.tagHeader(tag: tag)
@@ -235,7 +251,7 @@ extension CBOR {
         case .date(let date):
             let dateHeader = CBOR.dateHeader()
             let dateHeaderData = [Data(of: dateHeader.first!), dateHeader.dropFirst()]
-            let encodedDate = CBOR.encodeDate(date, .binary)
+            let encodedDate = CBOR.encodeDate(date)
             let rawEncodedDate = encodedDate.dropFirst(dateHeader.count)
             let components = [dateHeaderData, [rawEncodedDate]].flatMap { $0 }
             return [

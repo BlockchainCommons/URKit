@@ -6,12 +6,12 @@ import Foundation
 public class CodableCBOREncoder {
     public init() {}
 
-    public func encode(_ value: Encodable, _ context: CBORContext) throws -> Data {
+    public func encode(_ value: Encodable) throws -> Data {
         let encoder = _CBOREncoder()
         if let dateVal = value as? Date {
-            return Data(CBOR.encodeDate(dateVal, context))
+            return Data(CBOR.encodeDate(dateVal))
         } else if let dataVal = value as? Data {
-            return Data(CBOR.encodeData(dataVal, context))
+            return Data(CBOR.encodeData(dataVal))
         }
         try value.encode(to: encoder)
         return encoder.data
@@ -22,8 +22,6 @@ final class _CBOREncoder {
     var codingPath: [CodingKey] = []
 
     var userInfo: [CodingUserInfoKey : Any] = [:]
-    
-    let context: CBORContext = .binary
 
     fileprivate var container: CBOREncodingContainer? {
         willSet {
@@ -44,7 +42,7 @@ extension _CBOREncoder: Encoder {
     func container<Key: CodingKey>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> {
         assertCanCreateContainer()
 
-        let container = KeyedContainer<Key>(codingPath: self.codingPath, userInfo: self.userInfo, context)
+        let container = KeyedContainer<Key>(codingPath: self.codingPath, userInfo: self.userInfo)
         self.container = container
 
         return KeyedEncodingContainer(container)
@@ -53,7 +51,7 @@ extension _CBOREncoder: Encoder {
     func unkeyedContainer() -> UnkeyedEncodingContainer {
         assertCanCreateContainer()
 
-        let container = UnkeyedContainer(codingPath: self.codingPath, userInfo: self.userInfo, context)
+        let container = UnkeyedContainer(codingPath: self.codingPath, userInfo: self.userInfo)
         self.container = container
 
         return container
@@ -62,7 +60,7 @@ extension _CBOREncoder: Encoder {
     func singleValueContainer() -> SingleValueEncodingContainer {
         assertCanCreateContainer()
 
-        let container = SingleValueContainer(codingPath: self.codingPath, userInfo: self.userInfo, context)
+        let container = SingleValueContainer(codingPath: self.codingPath, userInfo: self.userInfo)
         self.container = container
 
         return container
