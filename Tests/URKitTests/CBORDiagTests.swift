@@ -42,64 +42,30 @@ class CBORDiagTests: XCTestCase {
         let cbor = CBOR.array([[1, 2, 3], ["A", "B", "C"]])
         let expected = """
         [
-           [
-              1,
-              2,
-              3
-           ],
-           [
-              "A",
-              "B",
-              "C"
-           ]
+           [1, 2, 3],
+           ["A", "B", "C"]
         ]
         """
         XCTAssertEqual(cbor.diag, expected)
     }
 
     func testMap() {
-        let expected1 = """
-        {
-           1,
-           2,
-           3,
-           4
-        }
-        """
-
-        let expected2 = """
-        {
-           3,
-           4,
-           1,
-           2
-        }
-        """
+        let expected1 = "{1, 2, 3, 4}"
+        let expected2 = "{3, 4, 1, 2}"
         let cbor = CBOR.map([1: 2, 3: 4])
         let s = cbor.diag
         XCTAssert(s == expected1 || s == expected2)
     }
 
     func testOrderedMap() {
-        let expected = """
-        {
-           1,
-           2,
-           3,
-           4
-        }
-        """
+        let expected = "{1, 2, 3, 4}"
         let cbor = CBOR.orderedMap([1: 2, 3: 4])
         XCTAssertEqual(cbor.diag, expected)
     }
 
     func testTagged() {
         let cbor = CBOR.tagged(100, CBOR(true))
-        let expected = """
-        100(
-           true
-        )
-        """
+        let expected = "100(true)"
         XCTAssertEqual(cbor.diag, expected)
     }
 

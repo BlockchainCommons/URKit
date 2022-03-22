@@ -1,66 +1,6 @@
-// From: https://github.com/myfreeweb/SwiftCBOR
-// License: Public Domain
+// Originally based on: https://github.com/myfreeweb/SwiftCBOR
 
 import Foundation
-
-public struct OrderedMap: Hashable, ExpressibleByDictionaryLiteral, Sequence {
-    public var elements: [Entry]
-    
-    public init(_ elements: [Entry]) {
-        self.elements = elements
-    }
-    
-    public init(dictionaryLiteral elements: (CBOR, CBOR)...) {
-        self.elements = elements.map { Entry(key: $0.0, value: $0.1)}
-    }
-    
-    public var count: Int {
-        elements.count
-    }
-    
-    mutating public func append(_ e: (CBOR, CBOR)) {
-        elements.append(.init(key: e.0, value: e.1))
-    }
-    
-    mutating public func append(_ k: CBOR, _ v: CBOR) {
-        elements.append(.init(key: k, value: v))
-    }
-    
-    public struct Entry: Hashable {
-        public let key: CBOR
-        public let value: CBOR
-
-        public init(key: CBOR, value: CBOR) {
-            self.key = key
-            self.value = value
-        }
-        
-        public init(_ e: (CBOR, CBOR)) {
-            self.init(key: e.0, value: e.1)
-        }
-    }
-    
-    public func makeIterator() -> Iterator {
-        Iterator(elements: elements)
-    }
-    
-    public class Iterator: IteratorProtocol {
-        let elements: [Entry]
-        var iterator: IndexingIterator<[Entry]>
-        
-        init(elements: [Entry]) {
-            self.elements = elements
-            self.iterator = elements.makeIterator()
-        }
-        
-        public func next() -> (CBOR, CBOR)? {
-            guard let e = iterator.next() else {
-                return nil
-            }
-            return (e.key, e.value)
-        }
-    }
-}
 
 enum DiagItem {
     case item(String)
@@ -70,6 +10,42 @@ enum DiagItem {
         switch self {
         case .item(let string):
             return formatLine(level: level, string: string, separator: separator)
+        case .group:
+            if containsGroup || totalStringsLength > 20 || greatestStringsLength > 20 {
+                return multilineComposition(level: level, separator: separator)
+            } else {
+                return singleLineComposition(level: level, separator: separator)
+            }
+        }
+    }
+    
+    private func formatLine(level: Int, string: String, separator: String = "") -> String {
+        String(repeating: " ", count: level * 3) + string + separator
+    }
+    
+    func singleLineComposition(level: Int, separator: String) -> String {
+        let string: String
+        switch self {
+        case .item(let s):
+            string = s
+        case .group(let begin, let end, let items):
+            let components = items.map { item -> String in
+                switch item {
+                case .item(let string):
+                    return string
+                case .group:
+                    return "<group>"
+                }
+            }
+            string = components.joined(separator: ", ").flanked(begin, end)
+        }
+        return formatLine(level: level, string: string, separator: separator)
+    }
+    
+    func multilineComposition(level: Int, separator: String) -> String {
+        switch self {
+        case .item(let string):
+            return string
         case .group(let begin, let end, let items):
             var lines: [String] = []
             lines.append(formatLine(level: level, string: begin))
@@ -82,8 +58,43 @@ enum DiagItem {
         }
     }
     
-    private func formatLine(level: Int, string: String, separator: String = "") -> String {
-        String(repeating: " ", count: level * 3) + string + separator
+    var totalStringsLength: Int {
+        switch self {
+        case .item(let string):
+            return string.count
+        case .group(_, _, let items):
+            return items.reduce(into: 0) { result, item in
+                result += item.totalStringsLength
+            }
+        }
+    }
+    
+    var greatestStringsLength: Int {
+        switch self {
+        case .item(let string):
+            return string.count
+        case .group(_, _, let items):
+            return items.reduce(into: 0) { result, item in
+                result = max(result, item.totalStringsLength)
+            }
+        }
+    }
+    
+    var isGroup: Bool {
+        if case .group = self {
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    var containsGroup: Bool {
+        switch self {
+        case .item:
+            return false
+        case .group(_, _, let items):
+            return items.first { $0.isGroup } != nil
+        }
     }
 }
 
