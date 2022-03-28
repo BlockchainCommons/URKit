@@ -216,10 +216,13 @@ extension CBOR {
             return [DumpItem(level: level, data: self.encoded, note: "negative(\(ni))")]
         case .data(let d):
             let note = d.utf8?.sanitized?.flanked("\"")
-            return [
-                DumpItem(level: level, data: CBOR.byteStringHeader(count: d.count), note: "bytes(\(d.count))"),
-                DumpItem(level: level + 1, data: d, note: note)
+            var items = [
+                DumpItem(level: level, data: CBOR.byteStringHeader(count: d.count), note: "bytes(\(d.count))")
             ]
+            if !d.isEmpty {
+                items.append(DumpItem(level: level + 1, data: d, note: note))
+            }
+            return items
         case .utf8String(let s):
             let stringHeader = CBOR.stringHeader(str: s)
             return [

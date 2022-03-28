@@ -71,6 +71,17 @@ class CBORDumpTests: XCTestCase {
         XCTAssertEqual(CBOR.array(["foo", "bar", ["baz", "quux"]]).dump, expected)
     }
     
+    func testEmptyData() {
+        let expected = """
+        83       # array(3)
+           40    # bytes(0)
+           40    # bytes(0)
+           41    # bytes(1)
+              58 # "X"
+        """
+        XCTAssertEqual(CBOR.array([CBOR.data("".utf8Data), CBOR.data(Data()), CBOR.data("X".utf8Data)]).dump, expected)
+    }
+    
     func testMap() {
         let expected1 = """
         a2    # map(2)
