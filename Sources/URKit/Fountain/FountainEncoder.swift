@@ -106,7 +106,7 @@ public final class FountainEncoder {
                 .unsignedInt(UInt64(checksum)),
                 .data(data)
             ]
-            return wrapper.encoded
+            return wrapper.cborEncode
         }
     }
 

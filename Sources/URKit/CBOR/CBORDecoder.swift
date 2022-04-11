@@ -8,6 +8,8 @@ public enum CBORDecodingError : LocalizedError {
     case wrongTypeInsideSequence
     case tooLongSequence
     case incorrectUTF8String
+    case typeMismatch
+    case valueOutOfRange
     
     public var errorDescription: String? {
         switch self {
@@ -19,6 +21,10 @@ public enum CBORDecodingError : LocalizedError {
             return "CBOR: Sequence too long."
         case .incorrectUTF8String:
             return "CBOR: Incorrect UTF8 string."
+        case .typeMismatch:
+            return "CBOR: Type mismatch."
+        case .valueOutOfRange:
+            return "CBOR: Value out of range."
         }
     }
 }

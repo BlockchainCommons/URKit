@@ -210,10 +210,10 @@ extension CBOR {
     func dumpItems(level: Int) -> [DumpItem] {
         switch self {
         case .unsignedInt(let n):
-            return [DumpItem(level: level, data: self.encoded, note: "unsigned(\(n))")]
+            return [DumpItem(level: level, data: self.cborEncode, note: "unsigned(\(n))")]
         case .negativeInt(let n):
             let ni = ~Int64(bitPattern: n)
-            return [DumpItem(level: level, data: self.encoded, note: "negative(\(ni))")]
+            return [DumpItem(level: level, data: self.cborEncode, note: "negative(\(ni))")]
         case .data(let d):
             let note = d.utf8?.sanitized?.flanked("\"")
             var items = [
@@ -237,27 +237,27 @@ extension CBOR {
             ]
         case .boolean(let b):
             return [
-                DumpItem(level: level, data: encoded, note: String(b))
+                DumpItem(level: level, data: cborEncode, note: String(b))
             ]
         case .null:
             return [
-                DumpItem(level: level, data: encoded, note: "null")
+                DumpItem(level: level, data: cborEncode, note: "null")
             ]
         case .undefined:
             return [
-                DumpItem(level: level, data: encoded, note: "undefined")
+                DumpItem(level: level, data: cborEncode, note: "undefined")
             ]
         case .half(let f):
             return [
-                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: String(f))
+                DumpItem(level: level, data: [Data(of: cborEncode.first!), cborEncode.dropFirst()], note: String(f))
             ]
         case .float(let f):
             return [
-                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: String(f))
+                DumpItem(level: level, data: [Data(of: cborEncode.first!), cborEncode.dropFirst()], note: String(f))
             ]
         case .double(let f):
             return [
-                DumpItem(level: level, data: [Data(of: encoded.first!), encoded.dropFirst()], note: String(f))
+                DumpItem(level: level, data: [Data(of: cborEncode.first!), cborEncode.dropFirst()], note: String(f))
             ]
         case .tagged(let tag, let cbor):
             let tagHeader = CBOR.tagHeader(tag: tag)
