@@ -9,6 +9,12 @@ public protocol CBOREncodable {
     var cbor: CBOR { get }
 }
 
+extension CBOREncodable {
+    public var cborEncode: Data {
+        cbor.cborEncode
+    }
+}
+
 public protocol CBORDecodable {
     static func cborDecode(_ cbor: CBOR) throws -> Self
 }
