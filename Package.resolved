@@ -1,16 +1,14 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "WolfBase",
-        "repositoryURL": "https://github.com/wolfmcnally/WolfBase",
-        "state": {
-          "branch": null,
-          "revision": "10f8f43cb9ffca924c02df9ea77019402df43cba",
-          "version": "3.26.0"
-        }
+  "pins" : [
+    {
+      "identity" : "wolfbase",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/wolfmcnally/WolfBase",
+      "state" : {
+        "revision" : "81a1ddeb4e21dadc34ed23faed3b61e475eb4fab",
+        "version" : "4.0.0"
       }
-    ]
-  },
-  "version": 1
+    }
+  ],
+  "version" : 2
 }
