@@ -6,7 +6,7 @@ let package = Package(
     name: "URKit",
     platforms: [
         .macOS(.v12),
-        .iOS(.v13)
+        .iOS(.v15)
     ],
     products: [
         .library(
