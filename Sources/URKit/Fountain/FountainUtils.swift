@@ -8,10 +8,12 @@
 import Foundation
 
 extension Data {
-    func xor(into d: inout Data) {
-        assert(count == d.count)
+    func xor(into data: inout Data) {
+        assert(count == data.count)
         withUnsafeBytes { selfBytes in
-            d.withUnsafeMutableBytes { dBytes in
+            let selfBytes = selfBytes.bindMemory(to: UInt8.self)
+            return data.withUnsafeMutableBytes { dBytes in
+                let dBytes = dBytes.bindMemory(to: UInt8.self)
                 for i in (0..<count) {
                     dBytes[i] ^= selfBytes[i]
                 }
@@ -19,9 +21,9 @@ extension Data {
         }
     }
 
-    func xor(with d: Data) -> Data {
+    func xor(with data: Data) -> Data {
         var b = self
-        d.xor(into: &b)
+        data.xor(into: &b)
         return b
     }
 }
