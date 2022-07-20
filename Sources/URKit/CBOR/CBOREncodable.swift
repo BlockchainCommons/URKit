@@ -355,3 +355,5 @@ extension Data: CBORDecodable {
         }
     }
 }
+
+public typealias CBORCodable = CBOREncodable & CBORDecodable

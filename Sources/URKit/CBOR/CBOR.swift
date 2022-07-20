@@ -4,17 +4,17 @@ import Foundation
 
 enum DiagItem {
     case item(String)
-    case group(String, String, [DiagItem])
+    case group(begin: String, end: String, items: [DiagItem], comment: String?)
     
-    func format(level: Int = 0, separator: String = "") -> String {
+    func format(level: Int = 0, separator: String = "", annotate: Bool = false) -> String {
         switch self {
         case .item(let string):
             return formatLine(level: level, string: string, separator: separator)
         case .group:
             if containsGroup || totalStringsLength > 20 || greatestStringsLength > 20 {
-                return multilineComposition(level: level, separator: separator)
+                return multilineComposition(level: level, separator: separator, annotate: annotate)
             } else {
-                return singleLineComposition(level: level, separator: separator)
+                return singleLineComposition(level: level, separator: separator, annotate: annotate)
             }
         }
     }
@@ -23,12 +23,12 @@ enum DiagItem {
         String(repeating: " ", count: level * 3) + string + separator
     }
     
-    func singleLineComposition(level: Int, separator: String) -> String {
+    func singleLineComposition(level: Int, separator: String, annotate: Bool) -> String {
         let string: String
         switch self {
         case .item(let s):
             string = s
-        case .group(let begin, let end, let items):
+        case .group(let begin, let end, let items, let comment):
             let components = items.map { item -> String in
                 switch item {
                 case .item(let string):
@@ -37,21 +37,38 @@ enum DiagItem {
                     return "<group>"
                 }
             }
-            string = components.joined(separator: ", ").flanked(begin, end)
+            let s = components.joined(separator: ", ").flanked(begin, end)
+            if
+                annotate,
+                let comment
+            {
+                string = "\(s)   ; \(comment)"
+            } else {
+                string = s
+            }
         }
         return formatLine(level: level, string: string, separator: separator)
     }
     
-    func multilineComposition(level: Int, separator: String) -> String {
+    func multilineComposition(level: Int, separator: String, annotate: Bool) -> String {
         switch self {
         case .item(let string):
             return string
-        case .group(let begin, let end, let items):
+        case .group(let begin, let end, let items, let comment):
             var lines: [String] = []
-            lines.append(formatLine(level: level, string: begin))
+            let b: String
+            if
+                annotate,
+                let comment
+            {
+                b = "\(begin)   ; \(comment)"
+            } else {
+                b = begin
+            }
+            lines.append(formatLine(level: level, string: b))
             for (index, item) in items.enumerated() {
                 let separator = index == items.count - 1 ? "" : ","
-                lines.append(item.format(level: level + 1, separator: separator))
+                lines.append(item.format(level: level + 1, separator: separator, annotate: annotate))
             }
             lines.append(formatLine(level: level, string: end, separator: separator))
             return lines.joined(separator: "\n")
@@ -62,7 +79,7 @@ enum DiagItem {
         switch self {
         case .item(let string):
             return string.count
-        case .group(_, _, let items):
+        case .group(_, _, let items, _):
             return items.reduce(into: 0) { result, item in
                 result += item.totalStringsLength
             }
@@ -73,7 +90,7 @@ enum DiagItem {
         switch self {
         case .item(let string):
             return string.count
-        case .group(_, _, let items):
+        case .group(_, _, let items, _):
             return items.reduce(into: 0) { result, item in
                 result = max(result, item.totalStringsLength)
             }
@@ -92,7 +109,7 @@ enum DiagItem {
         switch self {
         case .item:
             return false
-        case .group(_, _, let items):
+        case .group(_, _, let items, _):
             return items.first { $0.isGroup } != nil
         }
     }
@@ -100,10 +117,14 @@ enum DiagItem {
 
 extension CBOR {
     public var diag: String {
-        diagItem.format()
+        diagItem().format()
     }
     
-    var diagItem: DiagItem {
+    public var diagAnnotated: String {
+        diagItem(annotate: true).format(annotate: true)
+    }
+    
+    func diagItem(annotate: Bool = false) -> DiagItem {
         switch self {
         case .unsignedInt(let n):
             return .item(String(n))
@@ -130,27 +151,35 @@ extension CBOR {
             return .item(String(f))
         case .tagged(let tag, let cbor):
             return .group(
-                String(tag.rawValue) + "(", ")",
-                [cbor.diagItem]
+                begin: String(tag.rawValue) + "(",
+                end: ")",
+                items: [cbor.diagItem(annotate: annotate)],
+                comment: tag.name
             )
         case .array(let a):
             return .group(
-                "[", "]",
-                a.map { $0.diagItem }
+                begin: "[",
+                end: "]",
+                items: a.map { $0.diagItem(annotate: annotate) },
+                comment: nil
             )
         case .map(let m):
             return .group(
-                "{", "}",
-                m.map { (key, value) in
-                    [key.diagItem, value.diagItem]
-                }.flatMap { $0 }
+                begin: "{",
+                end: "}",
+                items: m.map { (key, value) in
+                    [key.diagItem(annotate: annotate), value.diagItem(annotate: annotate)]
+                }.flatMap { $0 },
+                comment: nil
             )
         case .orderedMap(let m):
             return .group(
-                "{", "}",
-                m.map { (k, v) in
-                    [k.diagItem, v.diagItem]
-                }.flatMap { $0 }
+                begin: "{",
+                end: "}",
+                items: m.map { (k, v) in
+                    [k.diagItem(annotate: annotate), v.diagItem(annotate: annotate)]
+                }.flatMap { $0 },
+                comment: nil
             )
         case .date(let date):
             return .item(date.ISO8601Format().flanked("1(", ")"))
@@ -265,7 +294,7 @@ extension CBOR {
                 String(tag.rawValue).flanked("tag(", ")")
             ]
             if let name = tag.name {
-                noteComponents.append(name)
+                noteComponents.append("  ; \(name)")
             }
             let tagNote = noteComponents.joined(separator: " ")
             return [
