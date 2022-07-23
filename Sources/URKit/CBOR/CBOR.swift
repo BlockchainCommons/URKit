@@ -1,6 +1,7 @@
 // Originally based on: https://github.com/myfreeweb/SwiftCBOR
 
 import Foundation
+import WolfBase
 
 enum DiagItem {
     case item(String)
@@ -607,3 +608,9 @@ extension CBOR.Tag: ExpressibleByIntegerLiteral {
 #if os(Linux)
 let NSEC_PER_SEC: UInt64 = 1_000_000_000
 #endif
+
+extension CBOR: DataProvider {
+    public var providedData: Data {
+        cborEncode
+    }
+}
