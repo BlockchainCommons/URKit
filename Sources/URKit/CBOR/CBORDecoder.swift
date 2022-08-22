@@ -71,6 +71,9 @@ public class CBORDecoder {
 
     public init(input: [UInt8], orderedKeys: Bool = false) {
         istream = ArrayUInt8(array: input)
+        if !orderedKeys {
+            print("⚠️ WARNING: Decoding CBOR with unordered keys may lead to nondeterministic results.")
+        }
         self.orderedKeys = orderedKeys
     }
 
@@ -267,7 +270,7 @@ public class CBORDecoder {
                 let date = Calendar.current.date(byAdding: DateComponents(day: days), to: Date(timeIntervalSince1970: 0))!
                 return CBOR.date(date)
             }
-            return CBOR.tagged(CBOR.Tag.knownTag(for: tagRawValue), item)
+            return CBOR.tagged(CBOR.Tag(rawValue: tagRawValue), item)
 
         case 0xe0...0xf3: return CBOR.simple(b - 0xe0)
         case 0xf4: return CBOR.boolean(false)

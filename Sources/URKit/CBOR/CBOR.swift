@@ -509,8 +509,8 @@ public indirect enum CBOR : Equatable, Hashable,
         public let rawValue: UInt64
         public let name: String?
         
-        public static func knownTag(for rawValue: UInt64) -> Tag {
-            knownTagsByRawValue[rawValue] ?? Tag(rawValue: rawValue)
+        public static func knownTag(for rawValue: UInt64) -> Tag? {
+            knownTagsByRawValue[rawValue]
         }
         
         public static func setKnownTag(_ tag: Tag) {
@@ -518,8 +518,12 @@ public indirect enum CBOR : Equatable, Hashable,
         }
         
         public init(rawValue: UInt64) {
-            self.rawValue = rawValue
-            self.name = nil
+            if let tag = Self.knownTag(for: rawValue) {
+                self = tag
+            } else {
+                self.rawValue = rawValue
+                self.name = nil
+            }
         }
         
         public init(_ rawValue: UInt64, _ name: String) {
