@@ -140,7 +140,7 @@ class CBORDumpTests: XCTestCase {
                        5840                      # bytes(64)
                           0f9c7af36804ffe5313c00115e5a31aa56814abaa77ff301da53d48613496e9c51a98b36d55f6fb5634fdb0123910cfa4904f1c60523df41013dc3749b377900
         """
-        let cbor = try! CBOR(encodedCBOR, orderedKeys: true)
+        let cbor = try! CBOR(encodedCBOR)
         XCTAssertEqual(cbor.dump, expected)
     }
     
@@ -161,7 +161,7 @@ class CBORDumpTests: XCTestCase {
               78 7b                              # text(123)
                  4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e73656374657475722061646970697363696e6720656c69742c2073656420646f20656975736d6f642074656d706f7220696e6369646964756e74207574206c61626f726520657420646f6c6f7265206d61676e6120616c697175612e # "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         """
-        let cbor = try! CBOR(encodedCBOR, orderedKeys: true)
+        let cbor = try! CBOR(encodedCBOR)
         XCTAssertEqual(cbor.dump, expected)
     }
 }

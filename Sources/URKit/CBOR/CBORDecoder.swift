@@ -30,24 +30,24 @@ public enum CBORDecodingError : LocalizedError {
 }
 
 extension CBOR {
-    static func decode(_ input: Data, orderedKeys: Bool = false) throws -> CBOR? {
+    static func decode(_ input: Data, orderedKeys: Bool = true) throws -> CBOR? {
         return try CBORDecoder(input: input.bytes, orderedKeys: orderedKeys).decodeItem()
     }
 
-    static func decode(_ input: [UInt8], orderedKeys: Bool = false) throws -> CBOR? {
+    static func decode(_ input: [UInt8], orderedKeys: Bool = true) throws -> CBOR? {
         return try CBORDecoder(input: input, orderedKeys: orderedKeys).decodeItem()
     }
 }
 
 extension CBOR {
-    public init(_ input: Data, orderedKeys: Bool = false) throws {
+    public init(_ input: Data, orderedKeys: Bool = true) throws {
         guard let c = try Self.decode(input, orderedKeys: orderedKeys) else {
             throw CBORDecodingError.unfinishedSequence
         }
         self = c
     }
 
-    public init(_ input: [UInt8], orderedKeys: Bool = false) throws {
+    public init(_ input: [UInt8], orderedKeys: Bool = true) throws {
         guard let c = try Self.decode(input, orderedKeys: orderedKeys) else {
             throw CBORDecodingError.unfinishedSequence
         }
@@ -59,17 +59,17 @@ public class CBORDecoder {
     private var istream : CBORInputStream
     private let orderedKeys: Bool
 
-    public init(stream: CBORInputStream, orderedKeys: Bool = false) {
+    public init(stream: CBORInputStream, orderedKeys: Bool = true) {
         istream = stream
         self.orderedKeys = orderedKeys
     }
 
-    public init(input: ArraySlice<UInt8>, orderedKeys: Bool = false) {
+    public init(input: ArraySlice<UInt8>, orderedKeys: Bool = true) {
         istream = ArraySliceUInt8(slice: input)
         self.orderedKeys = orderedKeys
     }
 
-    public init(input: [UInt8], orderedKeys: Bool = false) {
+    public init(input: [UInt8], orderedKeys: Bool = true) {
         istream = ArrayUInt8(array: input)
         if !orderedKeys {
             print("⚠️ WARNING: Decoding CBOR with unordered keys may lead to nondeterministic results.")

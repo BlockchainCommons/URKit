@@ -100,7 +100,7 @@ class CBORDiagTests: XCTestCase {
            ]
         )
         """
-        let cbor = try! CBOR(encodedCBOR, orderedKeys: true)
+        let cbor = try! CBOR(encodedCBOR)
         XCTAssertEqual(cbor.diag, expected)
     }
 
@@ -120,7 +120,7 @@ class CBORDiagTests: XCTestCase {
            }
         )
         """
-        let cbor = try! CBOR(encodedCBOR, orderedKeys: true)
+        let cbor = try! CBOR(encodedCBOR)
         XCTAssertEqual(cbor.diag, expected)
     }
 }
