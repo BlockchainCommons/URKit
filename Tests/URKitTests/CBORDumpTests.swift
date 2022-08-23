@@ -48,7 +48,7 @@ class CBORDumpTests: XCTestCase {
         XCTAssertEqual(CBOR.tagged(200, "Hello").dump, expected)
         
         let expected2 = """
-        c1               # tag(1)
+        c1               # tag(1)   ; epoch-date-time
            65            # text(5)
               48656c6c6f # "Hello"
         """

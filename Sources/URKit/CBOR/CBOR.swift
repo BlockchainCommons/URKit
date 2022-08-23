@@ -609,6 +609,15 @@ extension CBOR.Tag: ExpressibleByIntegerLiteral {
     }
 }
 
+public extension CBOR.Tag {
+    var urType: String {
+        guard let name else {
+            preconditionFailure("No UR type name for tag \(rawValue).")
+        }
+        return name
+    }
+}
+
 #if os(Linux)
 let NSEC_PER_SEC: UInt64 = 1_000_000_000
 #endif

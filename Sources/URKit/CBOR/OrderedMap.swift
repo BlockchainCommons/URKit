@@ -58,3 +58,20 @@ public struct OrderedMap: Hashable, ExpressibleByDictionaryLiteral, Sequence {
         }
     }
 }
+
+public extension OrderedMap {
+    func valuesByIntKey() throws -> [UInt64: CBOR] {
+        var result: [UInt64: CBOR] = [:]
+        for (keyItem, value) in self {
+            guard
+                case CBOR.unsignedInt(let key) = keyItem,
+                result[key] == nil
+            else {
+                throw CBORError.invalidFormat
+            }
+
+            result[key] = value
+        }
+        return result
+    }
+}
