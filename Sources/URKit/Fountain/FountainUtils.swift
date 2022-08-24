@@ -10,7 +10,7 @@ import Foundation
 extension Data {
     func xor(into data: inout Data) {
         assert(count == data.count)
-        withUnsafeBytes { selfBytes in
+        withUnsafeBytes { selfBytes -> Void in
             let selfBytes = selfBytes.bindMemory(to: UInt8.self)
             return data.withUnsafeMutableBytes { dBytes in
                 let dBytes = dBytes.bindMemory(to: UInt8.self)

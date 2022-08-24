@@ -39,10 +39,7 @@ enum DiagItem {
                 }
             }
             let s = components.joined(separator: ", ").flanked(begin, end)
-            if
-                annotate,
-                let comment
-            {
+            if annotate, let comment = comment {
                 string = "\(s)   ; \(comment)"
             } else {
                 string = s
@@ -57,11 +54,8 @@ enum DiagItem {
             return string
         case .group(let begin, let end, let items, let comment):
             var lines: [String] = []
-            let b: String
-            if
-                annotate,
-                let comment
-            {
+            var b: String
+            if annotate, let comment = comment {
                 b = "\(begin)   ; \(comment)"
             } else {
                 b = begin
@@ -611,7 +605,7 @@ extension CBOR.Tag: ExpressibleByIntegerLiteral {
 
 public extension CBOR.Tag {
     var urType: String {
-        guard let name else {
+        guard let name = name else {
             preconditionFailure("No UR type name for tag \(rawValue).")
         }
         return name
