@@ -297,7 +297,11 @@ extension Bool: CBORDecodable {
     }
 }
 
-extension Array where Element: CBOREncodable {
+extension Array: CBOREncodable where Element: CBOREncodable {
+    public var cbor: CBOR {
+        .array(self.map { $0.cbor })
+    }
+    
     public func encode() -> Data {
         CBOR.encodeArray(self)
     }
