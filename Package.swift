@@ -1,4 +1,4 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.7
 
 import PackageDescription
 
@@ -6,7 +6,9 @@ let package = Package(
     name: "URKit",
     platforms: [
         .macOS(.v12),
-        .iOS(.v15)
+        .iOS(.v15),
+        .tvOS(.v15),
+        .watchOS(.v8)
     ],
     products: [
         .library(
@@ -14,7 +16,7 @@ let package = Package(
             targets: ["URKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/wolfmcnally/WolfBase", from: "4.0.0")
+        .package(url: "https://github.com/wolfmcnally/WolfBase", from: "5.0.0")
     ],
     targets: [
         .target(

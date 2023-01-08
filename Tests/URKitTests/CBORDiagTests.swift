@@ -14,7 +14,7 @@ class CBORDiagTests: XCTestCase {
         XCTAssertEqual(CBOR(0).diag, "0")
         XCTAssertEqual(CBOR(23).diag, "23")
         XCTAssertEqual(CBOR(65546).diag, "65546")
-        XCTAssertEqual(CBOR(4294967306).diag, "4294967306")
+        XCTAssertEqual(CBOR(1000000000).diag, "1000000000")
     }
 
     func testNegativeIntegers() {
