@@ -57,12 +57,6 @@ class CBORDiagTests: XCTestCase {
         XCTAssert(s == expected1 || s == expected2)
     }
 
-    func testOrderedMap() {
-        let expected = "{1, 2, 3, 4}"
-        let cbor = CBOR.orderedMap([1: 2, 3: 4])
-        XCTAssertEqual(cbor.diag, expected)
-    }
-
     func testTagged() {
         let cbor = CBOR.tagged(100, CBOR(true))
         let expected = "100(true)"
@@ -122,5 +116,91 @@ class CBORDiagTests: XCTestCase {
         """
         let cbor = try! CBOR(encodedCBOR)
         XCTAssertEqual(cbor.diag, expected)
+    }
+    
+    /// Ensure that key order conforms to:
+    /// https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1-2.3.2.1
+    func testKeyOrder() throws {
+        var dict: [CBOR : CBOR] = [:]
+        dict[10] = 1
+        dict[100] = 2
+        dict[-1] = 3
+        dict["z"] = 4
+        dict["aa"] = 5
+        dict[[100]] = 6
+        dict[[-1]] = 7
+        dict[false] = 8
+        let cbor = CBOR.map(dict)
+        let expectedDiag = """
+        {
+           10,
+           1,
+           100,
+           2,
+           -1,
+           3,
+           "z",
+           4,
+           "aa",
+           5,
+           [100],
+           6,
+           [-1],
+           7,
+           false,
+           8
+        }
+        """
+        XCTAssertEqual(cbor.diag, expectedDiag)
+        let expectedDump = """
+        a8         # map(8)
+           0a      # unsigned(10)
+           01      # unsigned(1)
+           1864    # unsigned(100)
+           02      # unsigned(2)
+           20      # negative(-1)
+           03      # unsigned(3)
+           61      # text(1)
+              7a   # "z"
+           04      # unsigned(4)
+           62      # text(2)
+              6161 # "aa"
+           05      # unsigned(5)
+           81      # array(1)
+              1864 # unsigned(100)
+           06      # unsigned(6)
+           81      # array(1)
+              20   # negative(-1)
+           07      # unsigned(7)
+           f4      # false
+           08      # unsigned(8)
+        """
+        XCTAssertEqual(cbor.dump, expectedDump)
+        let expectedHex = "a80a011864022003617a046261610581186406812007f408"
+        XCTAssertEqual(cbor.hex, expectedHex)
+        let decoded = try CBOR(cbor.cborEncode)
+        XCTAssertEqual(cbor, decoded)
+    }
+    
+    func testOutOfOrderKeys() {
+        let mapWithOutOfOrderKeys = ‡"a8f4080a011864022003617a046261610581186406812007"
+        XCTAssertThrowsError(try CBOR(mapWithOutOfOrderKeys)) { error in
+            guard let decodingError = error as? CBORDecodingError,
+                  decodingError == .keysOutOfOrder else {
+                XCTFail()
+                return
+            }
+        }
+    }
+    
+    func testDuplicateKey() {
+        let mapWithDuplicateKey = ‡"a90a011864022003617a046261610581186406812007f408f408"
+        XCTAssertThrowsError(try CBOR(mapWithDuplicateKey)) { error in
+            guard let decodingError = error as? CBORDecodingError,
+                  decodingError == .duplicateKey else {
+                XCTFail()
+                return
+            }
+        }
     }
 }

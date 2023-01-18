@@ -83,6 +83,7 @@ class CBORDumpTests: XCTestCase {
     }
     
     func testMap() {
+        let cbor = CBOR.map([1: 2, 3: 4])
         let expected1 = """
         a2    # map(2)
            01 # unsigned(1)
@@ -90,29 +91,7 @@ class CBORDumpTests: XCTestCase {
            03 # unsigned(3)
            04 # unsigned(4)
         """
-        let expected2 = """
-        a2    # map(2)
-           03 # unsigned(3)
-           04 # unsigned(4)
-           01 # unsigned(1)
-           02 # unsigned(2)
-        """
-        let cbor = CBOR.map([1: 2, 3: 4])
-        let d = cbor.dump
-        XCTAssert(d == expected1 || d == expected2)
-    }
-
-    func testOrderedMap() {
-        let expected = """
-        a2    # map(2)
-           01 # unsigned(1)
-           02 # unsigned(2)
-           03 # unsigned(3)
-           04 # unsigned(4)
-        """
-        let cbor = CBOR.orderedMap([1: 2, 3: 4])
-        let d = cbor.dump
-        XCTAssertEqual(d, expected)
+        XCTAssertEqual(cbor.dump, expected1)
     }
 
     func testDate() {

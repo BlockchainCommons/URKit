@@ -159,20 +159,12 @@ extension CBOR {
                 comment: nil
             )
         case .map(let m):
+            let sorted = m.sorted(by: { $0.key.cborEncode.lexicographicallyPrecedes($1.key.cborEncode) })
             return .group(
                 begin: "{",
                 end: "}",
-                items: m.map { (key, value) in
+                items: sorted.map { (key, value) in
                     [key.diagItem(annotate: annotate), value.diagItem(annotate: annotate)]
-                }.flatMap { $0 },
-                comment: nil
-            )
-        case .orderedMap(let m):
-            return .group(
-                begin: "{",
-                end: "}",
-                items: m.map { (k, v) in
-                    [k.diagItem(annotate: annotate), v.diagItem(annotate: annotate)]
                 }.flatMap { $0 },
                 comment: nil
             )
@@ -310,28 +302,15 @@ extension CBOR {
         case .map(let m):
             let mapHeader = CBOR.mapHeader(count: m.count)
             let mapHeaderData = [Data(of: mapHeader.first!), mapHeader.dropFirst()]
+            let sorted = m.sorted(by: { $0.key.cborEncode.lexicographicallyPrecedes($1.key.cborEncode) })
             return [
                 [
                     DumpItem(level: level, data: mapHeaderData, note: String(m.count).flanked("map(", ")"))
                 ],
-                m.flatMap {
+                sorted.flatMap {
                     [
                         $0.key.dumpItems(level: level + 1),
                         $0.value.dumpItems(level: level + 1)
-                    ].flatMap { $0 }
-                }
-            ].flatMap { $0 }
-        case .orderedMap(let m):
-            let mapHeader = CBOR.mapHeader(count: m.count)
-            let mapHeaderData = [Data(of: mapHeader.first!), mapHeader.dropFirst()]
-            return [
-                [
-                    DumpItem(level: level, data: mapHeaderData, note: String(m.count).flanked("map(", ")"))
-                ],
-                m.flatMap { (k, v) in
-                    [
-                        k.dumpItems(level: level + 1),
-                        v.dumpItems(level: level + 1)
                     ].flatMap { $0 }
                 }
             ].flatMap { $0 }
@@ -382,7 +361,6 @@ public indirect enum CBOR : Equatable, Hashable,
     case utf8String(String)
     case array([CBOR])
     case map([CBOR : CBOR])
-    case orderedMap(OrderedMap)
     case tagged(Tag, CBOR)
     case simple(UInt8)
     case boolean(Bool)
@@ -402,7 +380,6 @@ public indirect enum CBOR : Equatable, Hashable,
         case let .utf8String(l):  l.hash(into: &hasher)
         case let .array(l):       CBORUtil.djb2Hash(l.map { $0.hashValue }).hash(into: &hasher)
         case let .map(l):         CBORUtil.djb2Hash(l.map { $0.hashValue &+ $1.hashValue }).hash(into: &hasher)
-        case let .orderedMap(l):  CBORUtil.djb2Hash(l.map { $0.0.hashValue &+ $0.1.hashValue }).hash(into: &hasher)
         case let .tagged(t, l):   t.hash(into: &hasher)
                                   l.hash(into: &hasher)
         case let .simple(l):      l.hash(into: &hasher)
@@ -468,7 +445,6 @@ public indirect enum CBOR : Equatable, Hashable,
         case (let .utf8String(l),   let .utf8String(r)):    return l == r
         case (let .array(l),        let .array(r)):         return l == r
         case (let .map(l),          let .map(r)):           return l == r
-        case (let .orderedMap(l),   let .orderedMap(r)):    return l == r
         case (let .tagged(tl, l),   let .tagged(tr, r)):    return tl == tr && l == r
         case (let .simple(l),       let .simple(r)):        return l == r
         case (let .boolean(l),      let .boolean(r)):       return l == r
@@ -485,7 +461,6 @@ public indirect enum CBOR : Equatable, Hashable,
         case (.utf8String,   _):                            return false
         case (.array,        _):                            return false
         case (.map,          _):                            return false
-        case (.orderedMap,   _):                            return false
         case (.tagged,       _):                            return false
         case (.simple,       _):                            return false
         case (.boolean,      _):                            return false

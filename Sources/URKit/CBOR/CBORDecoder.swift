@@ -10,6 +10,8 @@ public enum CBORDecodingError : LocalizedError {
     case incorrectUTF8String
     case typeMismatch
     case valueOutOfRange
+    case duplicateKey
+    case keysOutOfOrder
     
     public var errorDescription: String? {
         switch self {
@@ -25,6 +27,10 @@ public enum CBORDecodingError : LocalizedError {
             return "CBOR: Type mismatch."
         case .valueOutOfRange:
             return "CBOR: Value out of range."
+        case .duplicateKey:
+            return "CBOR: Duplicate key."
+        case .keysOutOfOrder:
+            return "CBOR: Keys out of order."
         }
     }
 }
@@ -124,20 +130,21 @@ public class CBORDecoder {
 
     private func readNPairs(_ n: Int) throws -> [CBOR : CBOR] {
         var result: [CBOR: CBOR] = [:]
+        var previousItem: Data? = nil
         for _ in (0..<n) {
-            guard let key  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
-            guard let val  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
+            guard let key = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
+            guard result[key] == nil else {
+                throw CBORDecodingError.duplicateKey
+            }
+            let currentItem = key.cborEncode
+            if let prevItem = previousItem {
+                guard prevItem.lexicographicallyPrecedes(currentItem) else {
+                    throw CBORDecodingError.keysOutOfOrder
+                }
+            }
+            previousItem = currentItem
+            guard let val = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
             result[key] = val
-        }
-        return result
-    }
-
-    private func readNOrderedPairs(_ n: Int) throws -> OrderedMap {
-        var result: OrderedMap = [:]
-        for _ in (0..<n) {
-            guard let key  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
-            guard let val  = try decodeItem() else { throw CBORDecodingError.unfinishedSequence }
-            result.append(key, val)
         }
         return result
     }
@@ -153,24 +160,6 @@ public class CBORDecoder {
             guard let okey = key else { throw CBORDecodingError.unfinishedSequence }
             guard let oval = val else { throw CBORDecodingError.unfinishedSequence }
             result[okey] = oval
-            do { key = try decodeItem() } catch CBORDecodingError.unfinishedSequence { key = nil }
-            guard (key != CBOR.break) else { break } // don't eat the val after the break!
-            do { val = try decodeItem() } catch CBORDecodingError.unfinishedSequence { val = nil }
-        }
-        return result
-    }
-
-    func readOrderedPairsUntilBreak() throws -> OrderedMap {
-        var result: OrderedMap = [:]
-        var key = try decodeItem()
-        if key == CBOR.break {
-            return result
-        }
-        var val = try decodeItem()
-        while key != CBOR.break {
-            guard let okey = key else { throw CBORDecodingError.unfinishedSequence }
-            guard let oval = val else { throw CBORDecodingError.unfinishedSequence }
-            result.append(okey, oval)
             do { key = try decodeItem() } catch CBORDecodingError.unfinishedSequence { key = nil }
             guard (key != CBOR.break) else { break } // don't eat the val after the break!
             do { val = try decodeItem() } catch CBORDecodingError.unfinishedSequence { val = nil }
@@ -220,17 +209,9 @@ public class CBORDecoder {
         // pairs
         case 0xa0...0xbb:
             let count = try readLength(b, base: 0xa0)
-            if orderedKeys {
-                return CBOR.orderedMap(try readNOrderedPairs(count))
-            } else {
-                return CBOR.map(try readNPairs(count))
-            }
+            return CBOR.map(try readNPairs(count))
         case 0xbf:
-            if orderedKeys {
-                return CBOR.orderedMap(try readOrderedPairsUntilBreak())
-            } else {
-                return CBOR.map(try readPairsUntilBreak())
-            }
+            return CBOR.map(try readPairsUntilBreak())
 
         // tagged values
         case 0xc0...0xdb:

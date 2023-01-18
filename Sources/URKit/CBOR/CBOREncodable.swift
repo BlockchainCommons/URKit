@@ -29,7 +29,6 @@ extension CBOR: CBOREncodable {
         case let .utf8String(str): return str.cborEncode
         case let .array(a): return CBOR.encodeArray(a)
         case let .map(m): return CBOR.encodeMap(m)
-        case let .orderedMap(m): return CBOR.encodeOrderedMap(m)
         case let .date(d): return CBOR.encodeDate(d)
         case let .tagged(t, l): return CBOR.encodeTagged(tag: t, value: l)
         case let .simple(s): return CBOR.encodeSimpleValue(s)

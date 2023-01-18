@@ -152,18 +152,10 @@ extension CBOR {
     public static func encodeMap<A: CBOREncodable, B: CBOREncodable>(_ map: [A: B]) -> Data {
         var res = mapHeader(count: map.count)
         res.reserveCapacity(1 + map.count * (MemoryLayout<A>.size + MemoryLayout<B>.size + 2))
-        for (k, v) in map {
-            res.append(contentsOf: k.cborEncode)
-            res.append(contentsOf: v.cborEncode)
-        }
-        return res
-    }
-
-    public static func encodeOrderedMap(_ map: OrderedMap) -> Data {
-        var res = mapHeader(count: map.count)
-        for entry in map.elements {
-            res.append(contentsOf: entry.key.cborEncode)
-            res.append(contentsOf: entry.value.cborEncode)
+        let encodedMap = map.map({ ($0.key.cborEncode, $0.value.cborEncode) }).sorted(by: { $0.0.lexicographicallyPrecedes($1.0) })
+        for (k, v) in encodedMap {
+            res.append(contentsOf: k)
+            res.append(contentsOf: v)
         }
         return res
     }
