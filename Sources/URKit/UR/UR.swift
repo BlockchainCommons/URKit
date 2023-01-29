@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import DCBOR
 
 public enum URError: LocalizedError {
     case invalidType
@@ -30,32 +31,12 @@ public struct UR: Equatable, CustomStringConvertible {
         self.type = type
         self.cbor = cbor
     }
-}
+    
+    public init<T>(type: String, cbor: T) throws where T: CBOREncodable {
+        try self.init(type: type, cbor: cbor.encodeCBOR())
+    }
 
-public extension UR {
-    init(type: String, cbor: [UInt8]) throws {
-        try self.init(type: type, cbor: Data(cbor))
-    }
-    
-    init(type: String, cbor: CBOR) throws {
-        try self.init(type: type, cbor: cbor.cborEncode)
-    }
-    
-    init(type: CBOR.Tag, cbor: Data) throws {
-        try self.init(type: type.urType, cbor: cbor)
-    }
-    
-    init(type: CBOR.Tag, cbor: [UInt8]) throws {
-        try self.init(type: type.urType, cbor: cbor)
-    }
-    
-    init(type: CBOR.Tag, cbor: CBOR) throws {
-        try self.init(type: type.urType, cbor: cbor)
-    }
-}
-
-public extension UR {
-    init(urString: String) throws {
+    public init(urString: String) throws {
         self = try URDecoder.decode(urString)
     }
 }
@@ -81,9 +62,5 @@ public extension UR {
         guard self.type == type else {
             throw URError.unexpectedType
         }
-    }
-    
-    func checkType(_ tag: CBOR.Tag) throws {
-        try self.checkType(tag.urType)
     }
 }

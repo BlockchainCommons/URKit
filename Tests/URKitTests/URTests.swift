@@ -12,7 +12,6 @@ class URTests: XCTestCase {
     func testSinglePartUR() throws {
         let ur = makeMessageUR(len: 50)
         let encoded = UREncoder.encode(ur)
-        //print(encoded)
         let expected = "ur:bytes/hdeymejtswhhylkepmykhhtsytsnoyoyaxaedsuttydmmhhpktpmsrjtgwdpfnsboxgwlbaawzuefywkdplrsrjynbvygabwjldapfcsdwkbrkch"
         XCTAssertEqual(encoded, expected)
         let decoded = try URDecoder.decode(encoded)

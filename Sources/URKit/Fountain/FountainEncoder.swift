@@ -7,6 +7,7 @@
 
 import Foundation
 import WolfBase
+import DCBOR
 
 // Implements Luby transform code rateless coding
 // https://en.wikipedia.org/wiki/Luby_transform_code
@@ -61,7 +62,7 @@ public final class FountainEncoder {
         }
 
         public init(cbor: Data) throws {
-            guard let decoded = try! CBOR.decode(cbor) else { throw FountainEncoderError.invalidPartHeader }
+            guard let decoded = try? CBOR(cbor) else { throw FountainEncoderError.invalidPartHeader }
             guard case let CBOR.array(a) = decoded,
                   a.count == 5 else { throw FountainEncoderError.invalidPartHeader }
             var seqNum: UInt32!
@@ -72,19 +73,19 @@ public final class FountainEncoder {
             for (index, elem) in a.enumerated() {
                 switch index {
                 case 0:
-                    guard case let CBOR.unsignedInt(n) = elem else { throw FountainEncoderError.invalidPartHeader }
+                    guard case let CBOR.unsigned(n) = elem else { throw FountainEncoderError.invalidPartHeader }
                     seqNum = UInt32(n)
                 case 1:
-                    guard case let CBOR.unsignedInt(n) = elem else { throw FountainEncoderError.invalidPartHeader }
+                    guard case let CBOR.unsigned(n) = elem else { throw FountainEncoderError.invalidPartHeader }
                     seqLen = Int(n)
                 case 2:
-                    guard case let CBOR.unsignedInt(n) = elem else { throw FountainEncoderError.invalidPartHeader }
+                    guard case let CBOR.unsigned(n) = elem else { throw FountainEncoderError.invalidPartHeader }
                     messageLen = Int(n)
                 case 3:
-                    guard case let CBOR.unsignedInt(n) = elem else { throw FountainEncoderError.invalidPartHeader }
+                    guard case let CBOR.unsigned(n) = elem else { throw FountainEncoderError.invalidPartHeader }
                     checksum = UInt32(n)
                 case 4:
-                    guard case let CBOR.data(d) = elem else { throw FountainEncoderError.invalidPartHeader }
+                    guard case let CBOR.bytes(d) = elem else { throw FountainEncoderError.invalidPartHeader }
                     data = Data(d)
                 default:
                     fatalError()
@@ -99,14 +100,13 @@ public final class FountainEncoder {
         }
 
         public var cbor: Data {
-            let wrapper: CBOR = [
-                .unsignedInt(UInt64(seqNum)),
-                .unsignedInt(UInt64(seqLen)),
-                .unsignedInt(UInt64(messageLen)),
-                .unsignedInt(UInt64(checksum)),
-                .data(data)
-            ]
-            return wrapper.cborEncode
+            [
+                seqNum,
+                seqLen,
+                messageLen,
+                checksum,
+                data
+            ].encodeCBOR()
         }
     }
 
