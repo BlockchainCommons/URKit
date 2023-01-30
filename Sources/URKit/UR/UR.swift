@@ -24,16 +24,16 @@ public enum URError: LocalizedError {
 
 public struct UR: Equatable, CustomStringConvertible {
     public let type: String
-    public let cbor: Data
+    public let cborData: Data
     
-    public init(type: String, cbor: Data) throws {
+    public init(type: String, cborData: Data) throws {
         guard type.isURType else { throw URError.invalidType }
         self.type = type
-        self.cbor = cbor
+        self.cborData = cborData
     }
     
-    public init<T>(type: String, cbor: T) throws where T: CBOREncodable {
-        try self.init(type: type, cbor: cbor.encodeCBOR())
+    public init<T>(type: String, untaggedCBOR: T) throws where T: CBOREncodable {
+        try self.init(type: type, cborData: untaggedCBOR.encodeCBOR())
     }
 
     public init(urString: String) throws {
