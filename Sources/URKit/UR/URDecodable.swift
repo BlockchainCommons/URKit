@@ -8,7 +8,7 @@ public protocol URDecodable: CBORTaggedDecodable {
 public extension URDecodable {
     static func decodeUR(_ ur: UR) throws -> Self {
         try ur.checkType(Self.cborTag.name!)
-        return try decodeUntaggedCBOR(ur.cborData)
+        return try Self(untaggedCBORData: ur.cborData)
     }
     
     static func decodeUR(_ urString: String) throws -> Self {

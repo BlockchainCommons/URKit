@@ -33,7 +33,7 @@ public struct UR: Equatable, CustomStringConvertible {
     }
     
     public init<T>(type: String, untaggedCBOR: T) throws where T: CBOREncodable {
-        try self.init(type: type, cborData: untaggedCBOR.encodeCBOR())
+        try self.init(type: type, cborData: untaggedCBOR.cborData)
     }
 
     public init(urString: String) throws {

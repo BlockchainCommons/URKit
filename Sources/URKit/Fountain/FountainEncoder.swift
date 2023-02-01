@@ -106,7 +106,7 @@ public final class FountainEncoder {
                 messageLen,
                 checksum,
                 data
-            ].encodeCBOR()
+            ].cborData
         }
     }
 
