@@ -1,14 +1,13 @@
 import Foundation
 import DCBOR
 
-public protocol URDecodable: TaggedCBORDecodable {
-    static var urType: String { get }
+public protocol URDecodable: CBORTaggedDecodable {
     static func decodeUR(_ ur: UR) throws -> Self
 }
 
 public extension URDecodable {
     static func decodeUR(_ ur: UR) throws -> Self {
-        try ur.checkType(Self.urType)
+        try ur.checkType(Self.cborTag.name!)
         return try decodeUntaggedCBOR(ur.cborData)
     }
     
