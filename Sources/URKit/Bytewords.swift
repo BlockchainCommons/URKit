@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import WolfBase
 
 public enum BytewordsDecodingError: LocalizedError {
     case invalidWord
@@ -185,5 +184,98 @@ public struct Bytewords {
         let messageChecksum = deserialize(UInt32.self, Data(data.suffix(checksumSize)))
         guard messageChecksum == checksum else { throw BytewordsDecodingError.invalidChecksum }
         return message
+    }
+}
+
+public protocol Serializable {
+    var serialized: Data { get }
+}
+
+public func serialize<I>(_ n: I, littleEndian: Bool = false) -> Data where I: FixedWidthInteger {
+    let count = MemoryLayout<I>.size
+    var d = Data(repeating: 0, count: count)
+    d.withUnsafeMutableBytes {
+        $0.bindMemory(to: I.self).baseAddress!.pointee = littleEndian ? n.littleEndian : n.bigEndian
+    }
+    return d
+}
+
+public func deserialize<T, D>(_ t: T.Type, _ data: D, littleEndian: Bool = false) -> T? where T: FixedWidthInteger, D : DataProtocol {
+    let size = MemoryLayout<T>.size
+    guard data.count >= size else {
+        return nil
+    }
+
+    var dataBytes = [UInt8](repeating: 0, count: size)
+    return dataBytes.withUnsafeMutableBytes {
+        data.copyBytes(to: $0, count: size)
+        let a = $0.bindMemory(to: T.self).baseAddress!.pointee
+        return littleEndian ? T(littleEndian: a) : T(bigEndian: a)
+    }
+}
+
+extension FixedWidthInteger {
+    public func serialized(littleEndian: Bool = false) -> Data {
+        serialize(self, littleEndian: littleEndian)
+    }
+}
+
+extension UInt: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension UInt8: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension UInt16: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension UInt32: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension UInt64: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension Int: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension Int8: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension Int16: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension Int32: Serializable {
+    public var serialized: Data {
+        serialize(self)
+    }
+}
+
+extension Int64: Serializable {
+    public var serialized: Data {
+        serialize(self)
     }
 }

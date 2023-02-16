@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import WolfBase
 import DCBOR
 
 // Implements Luby transform code rateless coding

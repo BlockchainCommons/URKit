@@ -16,20 +16,20 @@ let package = Package(
             targets: ["URKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/wolfmcnally/WolfBase", from: "5.0.0"),
         .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", from: "0.2.0")
     ],
     targets: [
         .target(
             name: "URKit",
             dependencies: [
-                "WolfBase",
                 .product(name: "DCBOR", package: "BCSwiftDCBOR"),
             ]
         ),
         .testTarget(
             name: "URKitTests",
-            dependencies: ["URKit"]
+            dependencies: [
+                "URKit",
+            ]
         ),
     ]
 )

@@ -7,7 +7,6 @@
 
 import XCTest
 @testable import URKit
-import WolfBase
 
 class FountainCodesTests: XCTestCase {
     func testCRC32() {

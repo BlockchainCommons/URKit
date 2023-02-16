@@ -7,7 +7,6 @@
 
 import Foundation
 import CryptoKit
-import WolfBase
 
 // http://xoshiro.di.unimi.it/xoshiro256starstar.c
 // Translated to Swift by Wolf McNally
