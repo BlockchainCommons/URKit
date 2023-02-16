@@ -17,7 +17,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/wolfmcnally/WolfBase", from: "5.0.0"),
-        .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", branch: "master")
+        .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", from: "0.2.0")
     ],
     targets: [
         .target(
