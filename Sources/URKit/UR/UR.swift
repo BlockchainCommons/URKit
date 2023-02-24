@@ -11,6 +11,7 @@ import DCBOR
 public enum URError: LocalizedError {
     case invalidType
     case unexpectedType
+    case invalidCBOR
     
     public var errorDescription: String? {
         switch self {
@@ -18,22 +19,24 @@ public enum URError: LocalizedError {
             return "Invalid UR type."
         case .unexpectedType:
             return "Unexpected UR type."
+        case .invalidCBOR:
+            return "Invalid CBOR."
         }
     }
 }
 
 public struct UR: Equatable, CustomStringConvertible {
     public let type: String
-    public let cborData: Data
+    public let cbor: CBOR
     
-    public init(type: String, cborData: Data) throws {
+    public init(type: String, cbor: CBOR) throws {
         guard type.isURType else { throw URError.invalidType }
         self.type = type
-        self.cborData = cborData
+        self.cbor = cbor
     }
     
     public init<T>(type: String, untaggedCBOR: T) throws where T: CBOREncodable {
-        try self.init(type: type, cborData: untaggedCBOR.cborData)
+        try self.init(type: type, cbor: untaggedCBOR.cbor)
     }
 
     public init(urString: String) throws {

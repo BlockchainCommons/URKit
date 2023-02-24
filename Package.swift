@@ -16,13 +16,15 @@ let package = Package(
             targets: ["URKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", from: "0.2.0")
+        .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", from: "0.2.0"),
+        .package(url: "https://github.com/BlockchainCommons/BCSwiftCrypto.git", from: "0.1.0")
     ],
     targets: [
         .target(
             name: "URKit",
             dependencies: [
                 .product(name: "DCBOR", package: "BCSwiftDCBOR"),
+                .product(name: "BCCrypto", package: "BCSwiftCrypto"),
             ]
         ),
         .testTarget(

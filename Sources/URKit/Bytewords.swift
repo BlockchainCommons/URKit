@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import BCCrypto
 
 public enum BytewordsDecodingError: LocalizedError {
     case invalidWord
@@ -171,7 +172,7 @@ public struct Bytewords {
 
     private static func appendChecksum(to data: Data) -> Data {
         var d = data
-        let checksum = CRC32.checksum(data: data)
+        let checksum = Crypto.crc32(data)
         d.append(checksum.serialized)
         return d
     }
@@ -180,18 +181,18 @@ public struct Bytewords {
         let checksumSize = MemoryLayout<UInt32>.size
         guard data.count > checksumSize else { throw BytewordsDecodingError.invalidChecksum }
         let message = data.prefix(data.count - checksumSize)
-        let checksum = CRC32.checksum(data: message)
+        let checksum = Crypto.crc32(message)
         let messageChecksum = deserialize(UInt32.self, Data(data.suffix(checksumSize)))
         guard messageChecksum == checksum else { throw BytewordsDecodingError.invalidChecksum }
         return message
     }
 }
 
-public protocol Serializable {
+protocol Serializable {
     var serialized: Data { get }
 }
 
-public func serialize<I>(_ n: I, littleEndian: Bool = false) -> Data where I: FixedWidthInteger {
+func serialize<I>(_ n: I, littleEndian: Bool = false) -> Data where I: FixedWidthInteger {
     let count = MemoryLayout<I>.size
     var d = Data(repeating: 0, count: count)
     d.withUnsafeMutableBytes {
@@ -200,7 +201,7 @@ public func serialize<I>(_ n: I, littleEndian: Bool = false) -> Data where I: Fi
     return d
 }
 
-public func deserialize<T, D>(_ t: T.Type, _ data: D, littleEndian: Bool = false) -> T? where T: FixedWidthInteger, D : DataProtocol {
+func deserialize<T, D>(_ t: T.Type, _ data: D, littleEndian: Bool = false) -> T? where T: FixedWidthInteger, D : DataProtocol {
     let size = MemoryLayout<T>.size
     guard data.count >= size else {
         return nil
@@ -215,67 +216,67 @@ public func deserialize<T, D>(_ t: T.Type, _ data: D, littleEndian: Bool = false
 }
 
 extension FixedWidthInteger {
-    public func serialized(littleEndian: Bool = false) -> Data {
+    func serialized(littleEndian: Bool = false) -> Data {
         serialize(self, littleEndian: littleEndian)
     }
 }
 
 extension UInt: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension UInt8: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension UInt16: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension UInt32: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension UInt64: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension Int: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension Int8: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension Int16: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension Int32: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }
 
 extension Int64: Serializable {
-    public var serialized: Data {
+    var serialized: Data {
         serialize(self)
     }
 }

@@ -16,6 +16,32 @@ extension Data {
     }
 }
 
+public func toByte<S>(hex: S) -> UInt8? where S: StringProtocol {
+    guard hex.count == 2 else {
+        return nil
+    }
+    return UInt8(hex, radix: 16)
+}
+
+func toData<S>(hex: S) -> Data? where S: StringProtocol {
+    guard hex.count & 1 == 0 else {
+        return nil
+    }
+    let len = hex.count / 2
+    var result = Data(capacity: len)
+    for i in 0..<len {
+        let j = hex.index(hex.startIndex, offsetBy: i*2)
+        let k = hex.index(j, offsetBy: 2)
+        let hexByte = hex[j..<k]
+        if var num = toByte(hex: hexByte) {
+            result.append(&num, count: 1)
+        } else {
+            return nil
+        }
+    }
+    return result
+}
+
 extension String {
     func chunked(into size: Int) -> [String] {
         var result: [String] = []

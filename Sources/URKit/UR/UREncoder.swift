@@ -10,7 +10,7 @@ import Foundation
 public final class UREncoder {
     /// Encode a single-part UR.
     public static func encode(_ ur: UR) -> String {
-        let body = Bytewords.encode(ur.cborData, style: .minimal)
+        let body = Bytewords.encode(ur.cbor.cborData, style: .minimal)
         return encodeUR([ur.type, body])
     }
 
@@ -27,7 +27,7 @@ public final class UREncoder {
     /// Start encoding a (possibly) multi-part UR.
     public init(_ ur: UR, maxFragmentLen: Int, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {
         self.ur = ur
-        fountainEncoder = FountainEncoder(message: ur.cborData, maxFragmentLen: maxFragmentLen, firstSeqNum: firstSeqNum, minFragmentLen: minFragmentLen)
+        fountainEncoder = FountainEncoder(message: ur.cbor.cborData, maxFragmentLen: maxFragmentLen, firstSeqNum: firstSeqNum, minFragmentLen: minFragmentLen)
     }
 
     /// `true` if the minimal number of parts to transmit the message have been

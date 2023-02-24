@@ -2,16 +2,16 @@ import Foundation
 import DCBOR
 
 public protocol URDecodable: CBORTaggedDecodable {
-    static func decodeUR(_ ur: UR) throws -> Self
+    init(ur: UR) throws
 }
 
 public extension URDecodable {
-    static func decodeUR(_ ur: UR) throws -> Self {
+    init(ur: UR) throws {
         try ur.checkType(Self.cborTag.name!)
-        return try Self(untaggedCBORData: ur.cborData)
+        try self.init(untaggedCBOR: ur.cbor)
     }
     
-    static func decodeUR(_ urString: String) throws -> Self {
-        try decodeUR(UR(urString: urString))
+    init(urString: String) throws {
+        try self.init(ur: UR(urString: urString))
     }
 }
