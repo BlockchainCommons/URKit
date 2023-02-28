@@ -9,4 +9,8 @@ public extension UREncodable {
     var ur: UR {
         try! UR(type: Self.cborTag.name!, untaggedCBOR: untaggedCBOR)
     }
+    
+    var urString: String {
+        ur.string
+    }
 }

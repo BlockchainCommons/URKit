@@ -1,12 +1,39 @@
 {
   "pins" : [
     {
+      "identity" : "bcswiftcrypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/BlockchainCommons/BCSwiftCrypto.git",
+      "state" : {
+        "revision" : "447107fd57ef82570c0f6925edba4e3deb486b35",
+        "version" : "0.2.0"
+      }
+    },
+    {
       "identity" : "bcswiftdcbor",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/BlockchainCommons/BCSwiftDCBOR",
       "state" : {
         "revision" : "5c0d4d2176ecfbb7b0e0647439db759d88ffa222",
         "version" : "0.2.0"
+      }
+    },
+    {
+      "identity" : "cryptoswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/krzyzanowskim/CryptoSwift.git",
+      "state" : {
+        "revision" : "19b3c3ceed117c5cc883517c4e658548315ba70b",
+        "version" : "1.6.0"
+      }
+    },
+    {
+      "identity" : "secp256k1-zkp.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/BlockchainCommons/secp256k1-zkp.swift.git",
+      "state" : {
+        "revision" : "e8f21c7d8d4dd7ac778e51427b908194f3fd9d82",
+        "version" : "0.5.1"
       }
     },
     {
