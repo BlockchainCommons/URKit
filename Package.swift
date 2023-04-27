@@ -5,10 +5,9 @@ import PackageDescription
 let package = Package(
     name: "URKit",
     platforms: [
-        .macOS(.v12),
-        .iOS(.v15),
-        .tvOS(.v15),
-        .watchOS(.v8)
+        .macOS(.v11),
+        .iOS(.v14),
+        .macCatalyst(.v14)
     ],
     products: [
         .library(
