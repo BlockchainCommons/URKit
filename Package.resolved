@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/BlockchainCommons/BCSwiftCrypto.git",
       "state" : {
-        "revision" : "447107fd57ef82570c0f6925edba4e3deb486b35",
-        "version" : "0.2.0"
+        "revision" : "6f7642ec7ee11098d3bcff56992431a7af1c6ce4",
+        "version" : "0.4.0"
       }
     },
     {
@@ -14,8 +14,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/BlockchainCommons/BCSwiftDCBOR",
       "state" : {
-        "revision" : "5c0d4d2176ecfbb7b0e0647439db759d88ffa222",
-        "version" : "0.2.0"
+        "revision" : "a92c06cc77e7d6b2417a27c9b1d41d74d35c006a",
+        "version" : "0.8.1"
+      }
+    },
+    {
+      "identity" : "bcswiftfloat16",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/blockchaincommons/BCSwiftFloat16.git",
+      "state" : {
+        "revision" : "0f364eb20ea3cd28cf8c39bdaf0acb5fe90bdcdb",
+        "version" : "0.1.1"
       }
     },
     {
@@ -23,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/krzyzanowskim/CryptoSwift.git",
       "state" : {
-        "revision" : "19b3c3ceed117c5cc883517c4e658548315ba70b",
-        "version" : "1.6.0"
+        "revision" : "eee9ad754926c40a0f7e73f152357d37b119b7fa",
+        "version" : "1.7.1"
       }
     },
     {
