@@ -28,25 +28,48 @@ extension Data {
     }
 }
 
-func chooseDegree(seqLen: Int, rng: Xoshiro256) -> Int {
-    let degreeProbabilities = (1 ... seqLen).map { 1 / Double($0) }
-    let degreeChooser = RandomSampler(degreeProbabilities)
-    return degreeChooser.next(rng.nextDouble) + 1
+final class DegreeChooser {
+    let seqLen: Int
+    let degreeProbabilities: [Double]
+    let sampler: RandomSampler
+    
+    init(seqLen: Int) {
+        self.seqLen = seqLen
+        self.degreeProbabilities = (1 ... seqLen).map { 1 / Double($0) }
+        self.sampler = RandomSampler(degreeProbabilities)
+    }
+    
+    func chooseDegree(using rng: Xoshiro256) -> Int {
+        return sampler.next(rng.nextDouble) + 1
+    }
 }
 
-func chooseFragments(seqNum: UInt32, seqLen: Int, checksum: UInt32) -> Set<Int> {
-    // The first `seqLen` parts are the "pure" fragments, not mixed with any
-    // others. This means that if you only generate the first `seqLen` parts,
-    // then you have all the parts you need to decode the message.
-    if seqNum <= seqLen {
-        return Set([Int(seqNum) - 1])
-    } else {
-        let seed = Data([seqNum.serialized, checksum.serialized].joined())
-        let rng = Xoshiro256(data: seed)
-        let degree = chooseDegree(seqLen: seqLen, rng: rng)
-        let indexes = Array(0 ..< seqLen)
-        let shuffledIndexes = shuffled(indexes, rng: rng)
-        return Set(shuffledIndexes.prefix(degree))
+final class FragmentChooser {
+    let degreeChooser: DegreeChooser
+    let indexes: [Int]
+    let checksum: UInt32
+    
+    var seqLen: Int { indexes.count }
+    
+    init(seqLen: Int, checksum: UInt32) {
+        self.degreeChooser = DegreeChooser(seqLen: seqLen)
+        self.indexes = Array(0 ..< seqLen)
+        self.checksum = checksum
+    }
+    
+    func chooseFragments(at seqNum: UInt32) -> Set<Int> {
+        // The first `seqLen` parts are the "pure" fragments, not mixed with any
+        // others. This means that if you only generate the first `seqLen` parts,
+        // then you have all the parts you need to decode the message.
+        if seqNum <= seqLen {
+            return Set([Int(seqNum) - 1])
+        } else {
+            let seed = Data([seqNum.serialized, checksum.serialized].joined())
+            let rng = Xoshiro256(data: seed)
+            let degree = degreeChooser.chooseDegree(using: rng)
+            let shuffledIndexes = shuffled(indexes, rng: rng)
+            return Set(shuffledIndexes.prefix(degree))
+        }
     }
 }
 

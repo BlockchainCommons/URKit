@@ -33,6 +33,7 @@ public final class FountainEncoder {
 
     let checksum: UInt32
     let fragments: [Data]
+    let fragmentChooser: FragmentChooser
 
     /// This becomes `true` when the minimum number of parts
     /// to relay the complete message have been generated
@@ -112,17 +113,18 @@ public final class FountainEncoder {
 
     public init(message: Data, maxFragmentLen: Int, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {
         assert(message.count <= UInt32.max)
-        messageLen = message.count
-        checksum = Crypto.crc32(message)
+        self.messageLen = message.count
+        self.checksum = Crypto.crc32(message)
         self.maxFragmentLen = maxFragmentLen
-        fragmentLen = Self.findNominalFragmentLength(messageLen: message.count, minFragmentLen: minFragmentLen, maxFragmentLen: maxFragmentLen)
-        fragments = Self.partitionMessage(message, fragmentLen: fragmentLen)
-        seqNum = firstSeqNum
+        self.fragmentLen = Self.findNominalFragmentLength(messageLen: message.count, minFragmentLen: minFragmentLen, maxFragmentLen: maxFragmentLen)
+        self.fragments = Self.partitionMessage(message, fragmentLen: fragmentLen)
+        self.seqNum = firstSeqNum
+        fragmentChooser = FragmentChooser(seqLen: fragments.count, checksum: checksum)
     }
 
     public func nextPart() -> Part {
         seqNum &+= 1 // wrap at period 2^32
-        lastPartIndexes = chooseFragments(seqNum: seqNum, seqLen: seqLen, checksum: checksum)
+        lastPartIndexes = fragmentChooser.chooseFragments(at: seqNum)
         let mixed = mix(partIndexes: lastPartIndexes)
         return Part(seqNum: seqNum, seqLen: seqLen, messageLen: messageLen, checksum: checksum, data: mixed)
     }
