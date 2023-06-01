@@ -114,7 +114,7 @@ public final class FountainEncoder {
     public init(message: Data, maxFragmentLen: Int, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {
         assert(message.count <= UInt32.max)
         self.messageLen = message.count
-        self.checksum = Crypto.crc32(message)
+        self.checksum = crc32(message)
         self.maxFragmentLen = maxFragmentLen
         self.fragmentLen = Self.findNominalFragmentLength(messageLen: message.count, minFragmentLen: minFragmentLen, maxFragmentLen: maxFragmentLen)
         self.fragments = Self.partitionMessage(message, fragmentLen: fragmentLen)

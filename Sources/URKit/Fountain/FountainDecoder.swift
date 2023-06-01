@@ -206,7 +206,7 @@ public final class FountainDecoder {
             let message = Self.joinFragments(fragments, messageLen: expectedMessageLen)
 
             // Verify the message checksum and note success or failure
-            let checksum = Crypto.crc32(message)
+            let checksum = crc32(message)
             if checksum == expectedChecksum {
                 result = .success(message)
             } else {
