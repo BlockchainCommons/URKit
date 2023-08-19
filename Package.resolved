@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/BlockchainCommons/BCSwiftDCBOR",
       "state" : {
-        "revision" : "d7cf9436fccf01dbe64acf07e735f9eb7b867b40",
-        "version" : "0.9.1"
+        "revision" : "6f73d8278ee99d9455debe2265ad8bc1d3551226",
+        "version" : "0.9.4"
       }
     },
     {
