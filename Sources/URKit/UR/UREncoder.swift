@@ -13,6 +13,10 @@ public final class UREncoder {
         let body = Bytewords.encode(ur.cbor.cborData, style: .minimal)
         return encodeUR([ur.type, body])
     }
+    
+    public static func checksumWords(_ ur: UR, style: Bytewords.Style = .standard) -> String {
+        Bytewords.checksumWords(ur.cbor.cborData, style: style)
+    }
 
     private let ur: UR
     private let fountainEncoder: FountainEncoder

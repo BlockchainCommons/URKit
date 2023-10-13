@@ -48,6 +48,18 @@ public struct Bytewords {
             return encodeMinimal(data)
         }
     }
+    
+    public static func checksumWords(_ data: Data, style: Style = .standard) -> String {
+        let checksum = Self.checksum(of: data)
+        return switch style {
+        case .standard:
+            encodeRaw(checksum, separator: " ")
+        case .uri:
+            encodeRaw(checksum, separator: "-")
+        case .minimal:
+            encodeMinimalRaw(checksum)
+        }
+    }
 
     public static func decode(_ string: String, style: Style = .standard) throws -> Data {
         switch style {
@@ -59,19 +71,27 @@ public struct Bytewords {
             return try decodeMinimal(string)
         }
     }
-
-    private static func encode(_ data: Data, separator: String) -> String {
-        let words = appendChecksum(to: data).map { byte in
+    
+    private static func encodeRaw(_ data: Data, separator: String) -> String {
+        let words = data.map { byte in
             indexToBytewords[byte]!
         }
         return words.joined(separator: separator)
     }
 
-    private static func encodeMinimal(_ data: Data) -> String {
-        let words = appendChecksum(to: data).map { byte in
+    private static func encode(_ data: Data, separator: String) -> String {
+        encodeRaw(data + checksum(of: data), separator: separator)
+    }
+    
+    private static func encodeMinimalRaw(_ data: Data) -> String {
+        let words = data.map { byte in
             indexToMinimalBytewords[byte]!
         }
         return words.joined(separator: "")
+    }
+
+    private static func encodeMinimal(_ data: Data) -> String {
+        encodeMinimalRaw(data + checksum(of: data))
     }
 
     private static func decode(_ string: String, separator: Character) throws -> Data {
@@ -169,12 +189,9 @@ public struct Bytewords {
         }
         return result
     }()
-
-    private static func appendChecksum(to data: Data) -> Data {
-        var d = data
-        let checksum = crc32(data)
-        d.append(checksum.serialized)
-        return d
+    
+    public static func checksum(of data: Data) -> Data {
+        crc32(data).serialized
     }
 
     private static func stripChecksum(from data: Data) throws -> Data {
