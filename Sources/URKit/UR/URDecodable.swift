@@ -7,7 +7,8 @@ public protocol URDecodable: CBORTaggedDecodable {
 
 public extension URDecodable {
     init(ur: UR) throws {
-        try ur.checkType(Self.cborTag.name!)
+        let names = Self.cborTags.compactMap { $0.name }
+        try ur.checkTypes(names)
         try self.init(untaggedCBOR: ur.cbor)
     }
     

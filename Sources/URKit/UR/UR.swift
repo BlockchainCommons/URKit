@@ -66,4 +66,10 @@ public extension UR {
             throw URError.unexpectedType
         }
     }
+    
+    func checkTypes(_ types: [String]) throws {
+        guard types.contains(self.type) else {
+            throw URError.unexpectedType
+        }
+    }
 }

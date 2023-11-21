@@ -7,7 +7,7 @@ public protocol UREncodable: CBORTaggedEncodable {
 
 public extension UREncodable {
     var ur: UR {
-        try! UR(type: Self.cborTag.name!, untaggedCBOR: untaggedCBOR)
+        try! UR(type: Self.cborTags.first!.name!, untaggedCBOR: untaggedCBOR)
     }
     
     var urString: String {
