@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 
 import PackageDescription
 
@@ -15,8 +15,8 @@ let package = Package(
             targets: ["URKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", from: "0.11.0"),
-        .package(url: "https://github.com/BlockchainCommons/BCSwiftCrypto.git", from: "0.1.0")
+        .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", from: "1.0.0"),
+        .package(url: "https://github.com/BlockchainCommons/BCSwiftCrypto.git", from: "1.0.0")
     ],
     targets: [
         .target(
