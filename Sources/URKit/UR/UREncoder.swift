@@ -26,7 +26,7 @@ public final class UREncoder {
     public var maxFragmentLen: Int { fountainEncoder.maxFragmentLen }
     public var seqNum: UInt32 { fountainEncoder.seqNum }
     public var seqLen: Int { fountainEncoder.seqLen }
-    public var lastPartIndexes: Set<Int> { fountainEncoder.lastPartIndexes }
+    public var lastFragmentIndexes: Set<Int> { fountainEncoder.lastFragmentIndexes }
 
     /// Start encoding a (possibly) multi-part UR.
     public init(_ ur: UR, maxFragmentLen: Int, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {

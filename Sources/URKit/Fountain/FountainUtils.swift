@@ -7,6 +7,9 @@
 
 import Foundation
 
+// For full implementation details, see:
+// https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-001-multipart-ur.md
+
 extension Data {
     func xor(into data: inout Data) {
         assert(count == data.count)
@@ -57,28 +60,27 @@ final class FragmentChooser {
         self.checksum = checksum
     }
     
-    func chooseFragments(at seqNum: UInt32) -> Set<Int> {
-        // The first `seqLen` parts are the "pure" fragments, not mixed with any
+    func chooseFragments(at seqNum: UInt32) -> FragmentIndexes {
+        // The first `seqLen` parts are the "simple" fragments, not mixed with any
         // others. This means that if you only generate the first `seqLen` parts,
-        // then you have all the parts you need to decode the message.
+        // then you have all the fragments you need to decode the message.
         if seqNum <= seqLen {
             return Set([Int(seqNum) - 1])
         } else {
             let seed = Data([seqNum.serialized, checksum.serialized].joined())
-            let rng = Xoshiro256(data: seed)
+            let rng = Xoshiro256(seed: seed)
             let degree = degreeChooser.chooseDegree(using: rng)
-            let shuffledIndexes = shuffled(indexes, rng: rng)
-            return Set(shuffledIndexes.prefix(degree))
+            return Set(shuffled(indexes, rng: rng, count: degree))
         }
     }
 }
 
 // Fisher-Yates shuffle
-func shuffled<T>(_ items: [T], rng: Xoshiro256) -> [T] {
+func shuffled<T>(_ items: [T], rng: Xoshiro256, count: Int) -> [T] {
     var remaining = items
     var result: [T] = []
     result.reserveCapacity(remaining.count)
-    while !remaining.isEmpty {
+    while result.count != count {
         let index = rng.nextInt(in: 0 ..< remaining.count)
         let item = remaining.remove(at: index)
         result.append(item)

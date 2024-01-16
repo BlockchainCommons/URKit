@@ -52,30 +52,44 @@ class FountainCodesTests: XCTestCase {
     }
 
     func testRandomSampler() {
+        // Each successive value should appear roughly twice as often as the previous value.
         let sampler = RandomSampler([1, 2, 4, 8])
         let rng = Xoshiro256(string: "Wolf")
-        let samples = (0 ..< 500).map { _ in sampler.next( { rng.nextDouble() } ) }
+        let samplesCount = 500
+        let samples = (0 ..< samplesCount).map { _ in sampler.next( { rng.nextDouble() } ) }
         let expectedSamples = [3, 3, 3, 3, 3, 3, 3, 0, 2, 3, 3, 3, 3, 1, 2, 2, 1, 3, 3, 2, 3, 3, 1, 1, 2, 1, 1, 3, 1, 3, 1, 2, 0, 2, 1, 0, 3, 3, 3, 1, 3, 3, 3, 3, 1, 3, 2, 3, 2, 2, 3, 3, 3, 3, 2, 3, 3, 0, 3, 3, 3, 3, 1, 2, 3, 3, 2, 2, 2, 1, 2, 2, 1, 2, 3, 1, 3, 0, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 1, 3, 3, 2, 0, 2, 2, 3, 1, 1, 2, 3, 2, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 2, 3, 1, 2, 1, 1, 3, 1, 3, 2, 2, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 2, 3, 3, 1, 2, 3, 3, 1, 3, 2, 3, 3, 3, 2, 3, 1, 3, 0, 3, 2, 1, 1, 3, 1, 3, 2, 3, 3, 3, 3, 2, 0, 3, 3, 1, 3, 0, 2, 1, 3, 3, 1, 1, 3, 1, 2, 3, 3, 3, 0, 2, 3, 2, 0, 1, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 2, 3, 3, 2, 0, 2, 3, 3, 3, 3, 2, 1, 1, 1, 2, 1, 3, 3, 3, 2, 2, 3, 3, 1, 2, 3, 0, 3, 2, 3, 3, 3, 3, 0, 2, 2, 3, 2, 2, 3, 3, 3, 3, 1, 3, 2, 3, 3, 3, 3, 3, 2, 2, 3, 1, 3, 0, 2, 1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 2, 2, 2, 3, 1, 1, 3, 2, 2, 0, 3, 2, 1, 2, 1, 0, 3, 3, 3, 2, 2, 3, 2, 1, 2, 0, 0, 3, 3, 2, 3, 3, 2, 3, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 3, 2, 2, 3, 1, 1, 0, 1, 3, 2, 3, 3, 2, 3, 3, 2, 3, 3, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 1, 2, 3, 3, 2, 2, 2, 2, 3, 3, 2, 0, 2, 1, 3, 3, 3, 3, 0, 3, 3, 3, 3, 2, 2, 3, 1, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3, 2, 3, 2, 1, 3, 3, 3, 3, 2, 2, 0, 1, 2, 3, 2, 0, 3, 3, 3, 3, 3, 3, 1, 3, 3, 2, 3, 2, 2, 3, 3, 3, 3, 3, 2, 2, 3, 3, 2, 2, 2, 1, 3, 3, 3, 3, 1, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 3, 2, 3, 1, 2, 3, 2, 1, 1, 3, 3, 2, 3, 3, 2, 3, 3, 0, 0, 1, 3, 3, 2, 3, 3, 3, 3, 1, 3, 3, 0, 3, 2, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 0, 3, 3, 2];
         XCTAssertEqual(samples, expectedSamples)
+        
+        var totals: [Int: Int] = [:]
+        for sample in samples {
+            totals[sample, default: 0] += 1
+        }
+        let sortedValues = Array(totals)
+            .sorted { $0.key < $1.key }
+            .map { $0.value }
+        // Nominal values for 500 samples: [33, 67, 133, 267]
+        XCTAssertEqual(sortedValues, [28, 68, 130, 274])
+        XCTAssertEqual(sortedValues.reduce(0, +), samplesCount)
     }
 
     func testShuffle() {
         let rng = Xoshiro256(string: "Wolf")
-        let values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        let result = (0..<10).map { _ in
-            shuffled(values, rng: rng)
+        let indexes = 1...10
+        let values = Array(indexes)
+        let result = indexes.map { count in
+            shuffled(values, rng: rng, count: count)
         }
         let expectedResult = [
-            [6, 4, 9, 3, 10, 5, 7, 8, 1, 2],
-            [10, 8, 6, 5, 1, 2, 3, 9, 7, 4],
-            [6, 4, 5, 8, 9, 3, 2, 1, 7, 10],
-            [7, 3, 5, 1, 10, 9, 4, 8, 2, 6],
-            [8, 5, 7, 10, 2, 1, 4, 3, 9, 6],
-            [4, 3, 5, 6, 10, 2, 7, 8, 9, 1],
-            [5, 1, 3, 9, 4, 6, 2, 10, 7, 8],
-            [2, 1, 10, 8, 9, 4, 7, 6, 3, 5],
-            [6, 7, 10, 4, 8, 9, 2, 3, 1, 5],
-            [10, 2, 1, 7, 9, 5, 6, 3, 4, 8]
+            [6],
+            [5, 8],
+            [4, 10, 5], 
+            [7, 10, 3, 8],
+            [10, 8, 6, 5, 1],
+            [1, 3, 9, 8, 4, 6],
+            [4, 6, 8, 9, 3, 2, 1],
+            [3, 9, 7, 4, 5, 1, 10, 8],
+            [3, 10, 2, 6, 8, 5, 7, 9, 1],
+            [1, 5, 3, 8, 2, 6, 7, 9, 4, 10]
         ]
         XCTAssertEqual(result, expectedResult)
     }
@@ -103,34 +117,43 @@ class FountainCodesTests: XCTestCase {
         XCTAssertEqual(message, rejoinedMessage)
     }
 
-    func testChooseDegree() {
+    func testDegreeChooser() {
         let message = makeMessage(len: 1024)
         let fragmentLen = FountainEncoder.findNominalFragmentLength(messageLen: message.count, minFragmentLen: 10, maxFragmentLen: 100)
         let fragments = FountainEncoder.partitionMessage(message, fragmentLen: fragmentLen)
-        let degreeChooser = DegreeChooser(seqLen: fragments.count)
-        let degrees = (1...200).map { nonce -> Int in
-            let rng = Xoshiro256(string: "Wolf-\(nonce)")
-            return degreeChooser.chooseDegree(using: rng)
-        }
-        let expectedDegrees = [11, 3, 6, 5, 2, 1, 2, 11, 1, 3, 9, 10, 10, 4, 2, 1, 1, 2, 1, 1, 5, 2, 4, 10, 3, 2, 1, 1, 3, 11, 2, 6, 2, 9, 9, 2, 6, 7, 2, 5, 2, 4, 3, 1, 6, 11, 2, 11, 3, 1, 6, 3, 1, 4, 5, 3, 6, 1, 1, 3, 1, 2, 2, 1, 4, 5, 1, 1, 9, 1, 1, 6, 4, 1, 5, 1, 2, 2, 3, 1, 1, 5, 2, 6, 1, 7, 11, 1, 8, 1, 5, 1, 1, 2, 2, 6, 4, 10, 1, 2, 5, 5, 5, 1, 1, 4, 1, 1, 1, 3, 5, 5, 5, 1, 4, 3, 3, 5, 1, 11, 3, 2, 8, 1, 2, 1, 1, 4, 5, 2, 1, 1, 1, 5, 6, 11, 10, 7, 4, 7, 1, 5, 3, 1, 1, 9, 1, 2, 5, 5, 2, 2, 3, 10, 1, 3, 2, 3, 3, 1, 1, 2, 1, 3, 2, 2, 1, 3, 8, 4, 1, 11, 6, 3, 1, 1, 1, 1, 1, 3, 1, 2, 1, 10, 1, 1, 8, 2, 7, 1, 2, 1, 9, 2, 10, 2, 1, 3, 4, 10]
+        let seqLen = fragments.count
+        let degreeChooser = DegreeChooser(seqLen: seqLen)
+        let rng = Xoshiro256(string: "Wolf")
+        let degrees = (1...1000).map { _ in degreeChooser.chooseDegree(using: rng) }
+        let expectedDegrees = [7, 9, 2, 1, 4, 2, 1, 1, 3, 10, 7, 1, 1, 4, 3, 8, 6, 2, 3, 2, 1, 1, 4, 5, 8, 4, 4, 1, 6, 1, 5, 2, 3, 3, 5, 2, 1, 10, 2, 5, 1, 1, 1, 5, 5, 11, 1, 1, 8, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 11, 1, 1, 5, 1, 1, 1, 3, 7, 3, 3, 2, 2, 4, 2, 1, 3, 1, 1, 8, 2, 1, 1, 2, 7, 1, 1, 2, 1, 2, 1, 4, 1, 1, 1, 2, 1, 8, 1, 5, 4, 2, 1, 1, 1, 1, 4, 1, 8, 1, 5, 4, 9, 1, 8, 6, 6, 7, 5, 4, 8, 5, 1, 2, 2, 11, 10, 1, 4, 3, 1, 2, 1, 2, 5, 1, 6, 2, 1, 3, 1, 8, 6, 3, 8, 1, 4, 1, 7, 6, 11, 1, 6, 1, 5, 5, 1, 3, 2, 4, 6, 3, 5, 1, 8, 1, 1, 1, 11, 3, 1, 2, 1, 4, 1, 2, 7, 5, 5, 5, 4, 6, 4, 3, 2, 3, 9, 1, 2, 3, 1, 2, 2, 5, 1, 1, 10, 3, 7, 2, 6, 1, 1, 1, 1, 3, 9, 1, 3, 1, 8, 4, 1, 3, 2, 3, 1, 1, 2, 4, 3, 4, 4, 4, 2, 6, 1, 7, 10, 3, 8, 1, 7, 6, 7, 1, 1, 1, 3, 11, 1, 1, 1, 2, 2, 3, 2, 8, 3, 1, 1, 2, 1, 3, 1, 3, 10, 1, 9, 11, 10, 3, 2, 5, 6, 1, 3, 3, 5, 1, 8, 8, 1, 2, 3, 1, 7, 6, 1, 11, 4, 9, 1, 1, 8, 1, 5, 3, 1, 8, 1, 1, 1, 3, 4, 2, 5, 1, 2, 10, 1, 8, 2, 11, 7, 4, 9, 2, 1, 1, 1, 3, 10, 1, 2, 1, 1, 8, 1, 1, 7, 1, 2, 9, 1, 1, 1, 11, 6, 6, 1, 8, 8, 4, 5, 6, 3, 5, 1, 7, 9, 1, 9, 2, 7, 8, 1, 1, 1, 2, 2, 2, 1, 8, 8, 2, 3, 2, 5, 8, 1, 5, 1, 3, 8, 8, 10, 2, 8, 3, 9, 3, 5, 2, 4, 2, 2, 2, 10, 6, 2, 2, 2, 11, 5, 4, 11, 1, 6, 10, 1, 10, 8, 1, 10, 6, 1, 2, 1, 3, 5, 1, 1, 4, 10, 2, 7, 2, 5, 8, 2, 2, 3, 11, 1, 6, 1, 6, 1, 4, 5, 1, 2, 5, 2, 1, 1, 2, 9, 2, 10, 1, 3, 1, 10, 3, 2, 7, 6, 1, 1, 4, 3, 6, 6, 1, 2, 1, 4, 2, 1, 2, 1, 1, 1, 3, 1, 4, 7, 11, 1, 4, 5, 2, 1, 2, 1, 9, 7, 1, 1, 2, 1, 6, 1, 1, 7, 11, 1, 1, 9, 5, 1, 1, 1, 4, 2, 1, 1, 4, 6, 2, 3, 1, 1, 1, 2, 1, 9, 1, 7, 1, 7, 1, 1, 1, 11, 1, 11, 11, 1, 8, 3, 5, 6, 4, 3, 9, 4, 1, 3, 1, 3, 2, 1, 1, 1, 1, 2, 1, 8, 1, 1, 6, 6, 3, 1, 8, 7, 2, 1, 2, 7, 6, 4, 3, 6, 1, 6, 3, 3, 2, 9, 9, 5, 2, 1, 2, 1, 9, 8, 8, 3, 7, 1, 5, 1, 2, 3, 1, 5, 2, 7, 8, 5, 1, 1, 2, 1, 1, 4, 3, 3, 2, 6, 2, 2, 1, 3, 4, 1, 2, 8, 2, 1, 4, 1, 2, 1, 2, 4, 1, 3, 1, 1, 1, 10, 1, 1, 2, 5, 11, 4, 1, 1, 1, 4, 3, 7, 1, 6, 8, 1, 3, 5, 1, 4, 1, 7, 8, 1, 4, 1, 2, 2, 7, 3, 1, 9, 11, 7, 1, 9, 4, 5, 2, 1, 5, 2, 4, 5, 1, 4, 2, 5, 2, 1, 10, 2, 1, 7, 4, 1, 7, 11, 5, 2, 11, 7, 6, 2, 1, 11, 3, 1, 5, 1, 1, 4, 10, 4, 1, 2, 1, 4, 11, 3, 1, 1, 1, 7, 1, 3, 1, 1, 7, 10, 6, 3, 6, 3, 9, 1, 3, 4, 7, 4, 1, 1, 1, 5, 7, 4, 5, 1, 6, 1, 4, 4, 8, 9, 1, 1, 2, 1, 10, 3, 1, 2, 1, 2, 3, 6, 2, 9, 1, 1, 6, 2, 3, 5, 2, 10, 5, 4, 10, 5, 2, 1, 5, 2, 1, 4, 4, 1, 2, 1, 1, 1, 9, 3, 3, 4, 2, 6, 7, 1, 1, 8, 3, 11, 1, 1, 2, 3, 8, 7, 11, 1, 1, 9, 3, 2, 2, 9, 3, 1, 8, 3, 7, 2, 4, 4, 1, 1, 5, 1, 1, 1, 2, 3, 10, 1, 11, 5, 3, 1, 1, 7, 9, 1, 1, 3, 5, 7, 5, 1, 5, 1, 2, 1, 11, 2, 1, 3, 3, 1, 1, 1, 2, 7, 9, 9, 5, 1, 4, 3, 5, 5, 8, 2, 1, 1, 2, 1, 2, 5, 4, 3, 3, 2, 4, 2, 4, 1, 8, 1, 2, 8, 3, 1, 8, 1, 1, 3, 2, 1, 1, 7, 1, 8, 1, 1, 1, 1, 2, 3, 6, 7, 1, 4, 4, 9, 6, 3, 4, 7, 6, 10, 1, 5, 6, 2, 3, 2, 3, 2, 11, 5, 3, 3, 6, 2, 1, 8, 5, 1, 8, 7, 2, 10, 1, 3, 1, 9, 2, 1, 10, 3, 3, 1, 1, 1, 1, 1, 8, 7, 3, 3, 1, 3, 4, 2, 8, 5, 6, 1, 10, 7, 4, 8, 1, 1, 1, 2, 3, 10, 2, 3, 3, 5, 3, 2, 3, 3, 5, 2, 2, 7, 1, 2, 6, 1, 1, 6, 1, 8, 7, 5, 10, 3, 9, 6, 3, 3, 11, 10, 4, 10, 5, 2, 1, 4, 1, 2, 6, 6, 3, 4, 1, 1, 2, 2, 1, 2, 1, 1, 3, 1, 1, 3]
         XCTAssertEqual(degrees, expectedDegrees)
+        var totals: [Int: Int] = [:]
+        for degree in degrees {
+            totals[degree, default: 0] += 1
+        }
+        let sortedDegrees = Array(totals)
+            .sorted { $0.key < $1.key }
+            .map { $0.value }
+        XCTAssertEqual(sortedDegrees, [328, 151, 116, 77, 71, 54, 52, 55, 33, 33, 30])
+        // Nominal values for 1000 samples: [331, 166, 110, 83, 66, 55, 47, 41, 37, 33, 30]
     }
 
-    func testChooseFragment() {
+    func testFragmentChooser() {
         let message = makeMessage(len: 1024)
         let checksum = crc32(message)
         let fragmentLen = FountainEncoder.findNominalFragmentLength(messageLen: message.count, minFragmentLen: 10, maxFragmentLen: 100)
         let fragments = FountainEncoder.partitionMessage(message, fragmentLen: fragmentLen)
         let fragmentChooser = FragmentChooser(seqLen: fragments.count, checksum: checksum)
-        let fragmentIndexes = (1...30).map { nonce -> [Int] in
+        let fragmentIndexes = (1...50).map { nonce -> [Int] in
             Array(fragmentChooser.chooseFragments(at: UInt32(nonce))).sorted()
         }
         //print(partIndexes)
 
-        // The first `seqLen` parts are the "pure" fragments, not mixed with any
+        // The first `seqLen` parts are the "simple" fixed-rate fragments, not mixed with any
         // others. This means that if you only generate the first `seqLen` parts,
-        // then you have all the parts you need to decode the message.
+        // you have all the fragments you need to decode the message.
         let expectedFragmentIndexes = [
+            // Fixed-rate parts:
             [0],
             [1],
             [2],
@@ -142,6 +165,8 @@ class FountainCodesTests: XCTestCase {
             [8],
             [9],
             [10],
+            
+            // Rateless parts:
             [9],
             [2, 5, 6, 8, 9, 10],
             [8],
@@ -160,7 +185,27 @@ class FountainCodesTests: XCTestCase {
             [0, 1, 3, 4, 5, 6, 7, 9, 10],
             [6],
             [5, 6],
-            [7]
+            [7],
+            [4, 9, 10],
+            [5],
+            [10],
+            [1, 3, 4, 5],
+            [6, 8],
+            [9],
+            [4, 5, 6, 8],
+            [4],
+            [0, 10],
+            [2, 5, 7, 10],
+            [4],
+            [0, 2, 4, 6, 7, 10],
+            [9],
+            [1],
+            [3, 6],
+            [3, 8],
+            [1, 2, 6, 9],
+            [0, 2, 4, 5, 6, 7, 9],
+            [0, 4],
+            [9]
         ]
         XCTAssertEqual(fragmentIndexes, expectedFragmentIndexes)
     }
@@ -182,7 +227,6 @@ class FountainCodesTests: XCTestCase {
         let message = makeMessage(len: 256)
         let encoder = FountainEncoder(message: message, maxFragmentLen: 30)
         let parts = (0 ..< 20).map { _ in encoder.nextPart().description }
-        print(parts)
         let expectedParts = [
             "seqNum:1, seqLen:9, messageLen:256, checksum:23570951, data:916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3c",
             "seqNum:2, seqLen:9, messageLen:256, checksum:23570951, data:cba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a",
@@ -248,11 +292,10 @@ class FountainCodesTests: XCTestCase {
     }
 
     func testDecoder() {
-        let messageSeed = "Wolf"
         let messageSize = 32767
         let maxFragmentLen = 1000
 
-        let message = makeMessage(len: messageSize, seed: messageSeed)
+        let message = makeMessage(len: messageSize)
         let encoder = FountainEncoder(message: message, maxFragmentLen: maxFragmentLen, firstSeqNum: 100)
         let decoder = FountainDecoder()
         repeat {
@@ -271,6 +314,16 @@ class FountainCodesTests: XCTestCase {
     func testCBOR() throws {
         let part = FountainEncoder.Part(seqNum: 12, seqLen: 8, messageLen: 100, checksum: 0x12345678, data: Data([1,5,3,3,5]))
         let cbor = part.cbor
+        XCTAssertEqual(cbor.hex, "850c0818641a12345678450105030305")
+        XCTAssertEqual(try! CBOR(cbor).diagnostic(), """
+        [
+           12,
+           8,
+           100,
+           305419896,
+           h'0105030305'
+        ]
+        """)
         let part2 = try FountainEncoder.Part(cbor: cbor)
         let cbor2 = part2.cbor
         XCTAssertEqual(cbor, cbor2)

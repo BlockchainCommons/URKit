@@ -12,6 +12,9 @@ import BCCrypto
 // Implements Luby transform code rateless coding
 // https://en.wikipedia.org/wiki/Luby_transform_code
 
+// For full implementation details, see:
+// https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-001-multipart-ur.md
+
 public enum FountainEncoderError: LocalizedError {
     case invalidPartHeader
     
@@ -27,9 +30,9 @@ public final class FountainEncoder {
     public let messageLen: Int
     public let fragmentLen: Int
     public let maxFragmentLen: Int
-    public private(set) var seqNum: UInt32
+    public var seqNum: UInt32
     public var seqLen: Int { fragments.count }
-    public private(set) var lastPartIndexes: PartIndexes!
+    public private(set) var lastFragmentIndexes: FragmentIndexes!
 
     let checksum: UInt32
     let fragments: [Data]
@@ -111,27 +114,39 @@ public final class FountainEncoder {
         }
     }
 
-    public init(message: Data, maxFragmentLen: Int, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {
+    public init(message: Data, maxFragmentLen: Int? = nil, firstSeqNum: UInt32 = 0, minFragmentLen: Int = 10) {
         assert(message.count <= UInt32.max)
         self.messageLen = message.count
         self.checksum = crc32(message)
-        self.maxFragmentLen = maxFragmentLen
-        self.fragmentLen = Self.findNominalFragmentLength(messageLen: message.count, minFragmentLen: minFragmentLen, maxFragmentLen: maxFragmentLen)
+        self.maxFragmentLen = maxFragmentLen ?? message.count
+        self.fragmentLen = Self.findNominalFragmentLength(messageLen: message.count, minFragmentLen: minFragmentLen, maxFragmentLen: self.maxFragmentLen)
         self.fragments = Self.partitionMessage(message, fragmentLen: fragmentLen)
         self.seqNum = firstSeqNum
         fragmentChooser = FragmentChooser(seqLen: fragments.count, checksum: checksum)
     }
 
     public func nextPart() -> Part {
-        seqNum &+= 1 // wrap at period 2^32
-        lastPartIndexes = fragmentChooser.chooseFragments(at: seqNum)
-        let mixed = mix(partIndexes: lastPartIndexes)
+        // wrap at period 2^32
+        seqNum &+= 1
+        // Don't call more than once on single-part generations.
+        assert(seqLen > 1 || seqNum == 1)
+        // Choose the fragments, and let the caller interrogate which fragments were chosen for debugging or feedback
+        lastFragmentIndexes = fragmentChooser.chooseFragments(at: seqNum)
+        // Mix the fragments
+        let mixed = mix(fragmentIndexes: lastFragmentIndexes)
+        // Return the resulting part
         return Part(seqNum: seqNum, seqLen: seqLen, messageLen: messageLen, checksum: checksum, data: mixed)
     }
 
-    private func mix(partIndexes: PartIndexes) -> Data {
-        partIndexes.reduce(into: Data(repeating: 0, count: fragmentLen)) { result, index in
-            fragments[index].xor(into: &result)
+    private func mix(fragmentIndexes: FragmentIndexes) -> Data {
+        if fragmentIndexes.count == 1 {
+            // Trivially return a single fragment
+            return fragments[fragmentIndexes.first!]
+        } else {
+            // XOR all the requested fragments together
+            return fragmentIndexes.reduce(into: Data(repeating: 0, count: fragmentLen)) { result, index in
+                fragments[index].xor(into: &result)
+            }
         }
     }
 

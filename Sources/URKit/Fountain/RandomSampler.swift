@@ -16,6 +16,9 @@ import Foundation
 
 // Translated to Swift by Wolf McNally
 
+// For full implementation details, see:
+// https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-001-multipart-ur.md
+
 final class RandomSampler {
     private let probs: [Double]
     private let aliases: [Int]

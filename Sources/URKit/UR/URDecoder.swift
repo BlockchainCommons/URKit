@@ -51,9 +51,9 @@ public final class URDecoder {
     let fountainDecoder: FountainDecoder
 
     public var expectedType: String?
-    public var expectedPartCount: Int! { fountainDecoder.expectedPartCount }
-    public var receivedPartIndexes: PartIndexes { fountainDecoder.receivedPartIndexes }
-    public var lastPartIndexes: PartIndexes! { fountainDecoder.lastPartIndexes }
+    public var expectedFragmentCount: Int! { fountainDecoder.expectedFragmentCount }
+    public var receivedFragmentIndexes: FragmentIndexes { fountainDecoder.receivedFragmentIndexes }
+    public var lastFragmentIndexes: FragmentIndexes! { fountainDecoder.lastFragmentIndexes }
     public var processedPartsCount: Int { fountainDecoder.processedPartsCount }
     public var estimatedPercentComplete: Double { fountainDecoder.estimatedPercentComplete }
     public var result: Result<UR, Swift.Error>?

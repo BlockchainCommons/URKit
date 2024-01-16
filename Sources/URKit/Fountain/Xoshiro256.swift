@@ -11,6 +11,9 @@ import CryptoKit
 // http://xoshiro.di.unimi.it/xoshiro256starstar.c
 // Translated to Swift by Wolf McNally
 
+// For full implementation details, see:
+// https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-001-multipart-ur.md
+
 /*  Written in 2018 by David Blackman and Sebastiano Vigna (vigna@acm.org)
 
 To the extent possible under law, the author has dedicated all copyright
@@ -30,11 +33,11 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
    a 64-bit seed, we suggest to seed a splitmix64 generator and use its
    output to fill s. */
 final class Xoshiro256 : RandomNumberGenerator {
-    var s: [UInt64]
+    var state: [UInt64]
 
-    init(_ s: [UInt64]) {
-        assert(s.count == 4)
-        self.s = s
+    init(state: [UInt64]) {
+        assert(state.count == 4)
+        self.state = state
     }
 
     convenience init(digest: SHA256Digest) {
@@ -50,19 +53,19 @@ final class Xoshiro256 : RandomNumberGenerator {
                 s[i] = v
             }
         }
-        self.init(s)
+        self.init(state: s)
     }
 
-    convenience init(data: Data) {
-        self.init(digest: SHA256.hash(data: data))
+    convenience init(seed: Data) {
+        self.init(digest: SHA256.hash(data: seed))
     }
 
     convenience init(string: String) {
-        self.init(data: string.utf8Data)
+        self.init(seed: string.utf8Data)
     }
 
     convenience init(crc32: UInt32) {
-        self.init(data: crc32.serialized)
+        self.init(seed: crc32.serialized)
     }
 
     func next() -> UInt64 {
@@ -70,17 +73,17 @@ final class Xoshiro256 : RandomNumberGenerator {
             (x << k) | (x >> (64 - k))
         }
 
-        let result = rotl(s[1] &* 5, 7) &* 9
-        let t = s[1] << 17
+        let result = rotl(state[1] &* 5, 7) &* 9
+        let t = state[1] << 17
 
-        s[2] ^= s[0]
-        s[3] ^= s[1]
-        s[1] ^= s[2]
-        s[0] ^= s[3]
+        state[2] ^= state[0]
+        state[3] ^= state[1]
+        state[1] ^= state[2]
+        state[0] ^= state[3]
 
-        s[2] ^= t
+        state[2] ^= t
 
-        s[3] = rotl(s[3], 45)
+        state[3] = rotl(state[3], 45)
 
         return result
     }
@@ -120,19 +123,19 @@ final class Xoshiro256 : RandomNumberGenerator {
         for j in JUMP {
             for b in 0 ..< 64 {
                 if (j & (1 << b)) != 0 {
-                    s0 ^= s[0]
-                    s1 ^= s[1]
-                    s2 ^= s[2]
-                    s3 ^= s[3]
+                    s0 ^= state[0]
+                    s1 ^= state[1]
+                    s2 ^= state[2]
+                    s3 ^= state[3]
                 }
                 _ = next()
             }
         }
 
-        s[0] = s0
-        s[1] = s1
-        s[2] = s2
-        s[3] = s3
+        state[0] = s0
+        state[1] = s1
+        state[2] = s2
+        state[3] = s3
     }
 
     /* This is the long-jump function for the generator. It is equivalent to
@@ -150,18 +153,18 @@ final class Xoshiro256 : RandomNumberGenerator {
         for j in LONG_JUMP {
             for b in 0 ..< 64 {
                 if (j & (1 << b)) != 0 {
-                    s0 ^= s[0]
-                    s1 ^= s[1]
-                    s2 ^= s[2]
-                    s3 ^= s[3]
+                    s0 ^= state[0]
+                    s1 ^= state[1]
+                    s2 ^= state[2]
+                    s3 ^= state[3]
                 }
                 _ = next()
             }
         }
 
-        s[0] = s0
-        s[1] = s1
-        s[2] = s2
-        s[3] = s3
+        state[0] = s0
+        state[1] = s1
+        state[2] = s2
+        state[3] = s3
     }
 }
