@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/BlockchainCommons/BCSwiftDCBOR", from: "1.0.0"),
-        .package(url: "https://github.com/BlockchainCommons/BCSwiftCrypto.git", from: "1.0.0")
+        .package(url: "https://github.com/BlockchainCommons/BCSwiftCrypto.git", from: "2.0.0")
     ],
     targets: [
         .target(
