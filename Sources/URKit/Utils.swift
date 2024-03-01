@@ -74,13 +74,13 @@ enum CRC32 {
         }
     }()
 
-    static func checksum(data: Data) -> UInt32 {
+    static func checksum(_ data: Data) -> UInt32 {
         ~(data.reduce(~UInt32(0), { crc, byte in
             (crc >> 8) ^ table[(Int(crc) ^ Int(byte)) & 0xFF]
         }))
     }
 
-    static func checksum(string: String) -> UInt32 {
-        checksum(data: string.utf8Data)
+    static func checksum(_ string: String) -> UInt32 {
+        checksum(string.utf8Data)
     }
 }
