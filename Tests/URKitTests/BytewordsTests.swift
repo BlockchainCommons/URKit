@@ -5,31 +5,32 @@
 //  Licensed under the "BSD-2-Clause Plus Patent License"
 //
 
-import XCTest
+import Testing
+import Foundation
 @testable import URKit
 
-class BytewordsTests: XCTestCase {
-    func test1() {
+struct BytewordsTests {
+    @Test func test1() throws {
         let input = Data([0, 1, 2, 128, 255])
-        XCTAssertEqual( Bytewords.encode(input, style: .standard), "able acid also lava zoom jade need echo taxi")
-        XCTAssertEqual( Bytewords.encode(input, style: .uri), "able-acid-also-lava-zoom-jade-need-echo-taxi")
-        XCTAssertEqual( Bytewords.encode(input, style: .minimal), "aeadaolazmjendeoti")
+        #expect( Bytewords.encode(input, style: .standard) == "able acid also lava zoom jade need echo taxi")
+        #expect( Bytewords.encode(input, style: .uri) == "able-acid-also-lava-zoom-jade-need-echo-taxi")
+        #expect( Bytewords.encode(input, style: .minimal) == "aeadaolazmjendeoti")
 
-        XCTAssertEqual( try Bytewords.decode("able acid also lava zoom jade need echo taxi", style: .standard), input )
-        XCTAssertEqual( try Bytewords.decode("able-acid-also-lava-zoom-jade-need-echo-taxi", style: .uri), input )
-        XCTAssertEqual( try Bytewords.decode("aeadaolazmjendeoti", style: .minimal), input )
+        #expect( try Bytewords.decode("able acid also lava zoom jade need echo taxi", style: .standard) == input )
+        #expect( try Bytewords.decode("able-acid-also-lava-zoom-jade-need-echo-taxi", style: .uri) == input )
+        #expect( try Bytewords.decode("aeadaolazmjendeoti", style: .minimal) == input )
 
         // bad checksum
-        XCTAssertThrowsError( try Bytewords.decode("able acid also lava zero jade need echo wolf", style: .standard) )
-        XCTAssertThrowsError( try Bytewords.decode("able-acid-also-lava-zero-jade-need-echo-wolf", style: .uri) )
-        XCTAssertThrowsError( try Bytewords.decode("aeadaolazojendeowf", style: .minimal) )
+        #expect(throws: (any Error).self) { try Bytewords.decode("able acid also lava zero jade need echo wolf", style: .standard) }
+        #expect(throws: (any Error).self) { try Bytewords.decode("able-acid-also-lava-zero-jade-need-echo-wolf", style: .uri) }
+        #expect(throws: (any Error).self) { try Bytewords.decode("aeadaolazojendeowf", style: .minimal) }
 
         // too short
-        XCTAssertThrowsError( try Bytewords.decode("wolf", style: .standard) )
-        XCTAssertThrowsError( try Bytewords.decode("", style: .standard) )
+        #expect(throws: (any Error).self) { try Bytewords.decode("wolf", style: .standard) }
+        #expect(throws: (any Error).self) { try Bytewords.decode("", style: .standard) }
     }
 
-    func test2() {
+    @Test func test2() {
         let input = Data([
             245, 215, 20, 198, 241, 235, 69, 59, 209, 205,
             165, 18, 150, 158, 116, 135, 229, 212, 19, 159,
@@ -66,7 +67,7 @@ class BytewordsTests: XCTestCase {
         fzhycypf
         """
 
-        XCTAssertEqual( Bytewords.encode(input, style: .standard), encoded)
-        XCTAssertEqual( Bytewords.encode(input, style: .minimal), encodedMinimal)
+        #expect( Bytewords.encode(input, style: .standard) == encoded)
+        #expect( Bytewords.encode(input, style: .minimal) == encodedMinimal)
     }
 }
