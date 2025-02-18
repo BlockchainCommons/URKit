@@ -27,6 +27,11 @@ public struct Bytewords {
         case uri
         case minimal
     }
+    
+    public static func identifier(_ data: Data) -> String {
+        precondition(data.count == 4, "Bytewords identifiers have exactly 4 bytes long")
+        return encodeRaw(data, separator: " ")
+    }
 
     public static func encodedLength(_ len: Int, style: Style = .standard) -> Int {
         switch style {
